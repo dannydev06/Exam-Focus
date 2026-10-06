@@ -13,6 +13,7 @@ Upload past questions, lecture notes and the course syllabus. Exam Focus learns 
 - **Exam mode**: countdown timer, question navigator, flagging, auto-submit when time runs out.
 - **Marking**: multiple-choice marked deterministically; written answers marked by an LLM against the model answer, with partial credit and saved feedback.
 - **Insights**: readiness score, topics tested most, results by topic, and weak-topic practice that builds an exam from the lowest-scoring topics.
+- **OCR for scans and photos**: scanned PDFs and phone photos of past papers are read locally with Tesseract (no API, no limits).
 - **Course setup**: add courses and lecturers in the app, and extract a topic list from pasted CCMAS course content (reviewed before saving).
 
 ## How it works
@@ -42,7 +43,7 @@ Node.js, TypeScript, Express, PostgreSQL, vanilla JavaScript single-page fronten
 
 ## Run it locally
 
-Requires Node 18+ and PostgreSQL 14+.
+Requires Node 20+ and PostgreSQL 14+.
 
 ```bash
 npm install
@@ -60,7 +61,7 @@ Free API keys are enough to try it: see `.env.example` for the providers support
 ## Limitations and roadmap
 
 - Single-user prototype: no login yet.
-- Scanned (image-only) PDFs are flagged but not read; OCR is planned.
+- OCR accuracy depends on scan quality; only the first 40 pages of a scanned PDF are read.
 - Uploaded files are parsed but not stored.
 
 ## Licence

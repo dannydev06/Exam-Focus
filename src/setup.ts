@@ -1,6 +1,7 @@
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import { db, llmJson } from "./lib.js";
 import { buildStyleProfile } from "./style.js";
+import { ocr } from "./ocr.js";
 
 export function setupRoutes(app: any, h: any, uid: (r: any) => string, upload: any) {
   const rows = async (sql: string, p: any[]) => (await db.query(sql, p)).rows;
@@ -26,7 +27,11 @@ export function setupRoutes(app: any, h: any, uid: (r: any) => string, upload: a
 
   // Suggest topics from pasted CCMAS text or an uploaded CCMAS page. Nothing is saved until the user confirms.
   app.post("/courses/:id/topics/extract", upload.single("file"), h(async (req: any, res: any) => {
-    const text: string = req.file ? (await pdf(req.file.buffer)).text : req.body.text;
+    let text: string = req.body.text;
+    if (req.file) { // text PDFs directly, scans and photos through OCR
+      text = req.file.mimetype.includes("pdf") ? (await pdf(req.file.buffer)).text : "";
+      if (text.trim().length < 100) text = await ocr(req.file.buffer, req.file.mimetype);
+    }
     if (!text || text.trim().length < 20) throw new Error("Paste the CCMAS course content or upload its PDF page.");
     const out = await llmJson<any[]>(
       "You read the course description from a Nigerian university CCMAS document and list its teachable topics.",

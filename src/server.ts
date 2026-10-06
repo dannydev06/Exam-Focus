@@ -19,11 +19,12 @@ const h = (fn: (req: any, res: any) => Promise<any>) => (req: any, res: any) =>
   fn(req, res).catch((e) => { console.error(e); res.status(500).json({ error: e.message }); });
 
 // Upload a PQ / note / textbook / CCMAS PDF
-app.post("/documents", upload.single("file"), h(async (req, res) => {
+app.post("/documents", upload.array("file", 30), h(async (req, res) => {
   const { courseId, kind, lecturerId, year } = req.body;
+  if (!req.files?.length) throw new Error("Choose a file first.");
   const documentId = await ingest({
     userId: uid(req), courseId, kind, lecturerId: lecturerId || undefined, year: year ? Number(year) : undefined,
-    file: req.file.buffer, storageKey: req.file.originalname, // TODO: persist to S3/R2
+    files: (req.files as any[]).map((f) => ({ buffer: f.buffer, mimetype: f.mimetype, name: f.originalname })), // TODO: persist to S3/R2
   });
   if (kind === "past_question") await buildStyleProfile(courseId, lecturerId || null);
   res.json({ documentId });
