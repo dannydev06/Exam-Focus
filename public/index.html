@@ -1,0 +1,132 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Exam Focus</title>
+<style>
+:root{--r:#DC2626;--r2:#B91C1C;--bd:#E4E4E7;--m:#71717A;--f:#18181B;--bg:#FAFAFA;--s:#F4F4F5}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;font:14px/1.5 Inter,system-ui,sans-serif;background:var(--bg);color:var(--f)}
+nav{background:#fff;border-bottom:1px solid var(--bd);height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 max(16px,calc((100% - 1160px)/2))}
+.logo{display:flex;gap:12px;align-items:center;font-weight:600;white-space:nowrap;text-decoration:none;color:inherit}
+.lg{width:32px;height:32px;border:1px solid var(--bd);border-radius:10px;display:grid;place-items:center;background:#FFF7F7}
+.lg i{width:16px;height:16px;border-radius:50%;display:block;background:radial-gradient(#DC2626 28%,#FFF7F7 30% 52%,#DC2626 54% 74%,#FFF7F7 76%)}
+.tabs{display:flex;gap:4px}.tabs a{padding:10px 16px;border-radius:10px;color:var(--m);text-decoration:none;white-space:nowrap}.tabs a.on{background:var(--s);color:var(--f)}
+.btn{background:var(--r);color:#fff;border:0;border-radius:10px;padding:12px 18px;font:600 14px inherit;cursor:pointer;text-decoration:none;white-space:nowrap;display:inline-block;text-align:center}
+.btn:hover{background:var(--r2)}.btn:disabled{opacity:.5}.btn.o{background:#fff;color:var(--f);border:1px solid var(--bd);font-weight:500}.btn.o:hover{background:var(--s)}.btn.w{width:100%}
+main{max-width:1040px;margin:0 auto;padding:32px 16px 64px}
+.k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);font-weight:600}
+h1{font-size:40px;line-height:1.1;letter-spacing:-.03em;margin:12px 0 8px;max-width:480px;text-wrap:balance}h2{font-size:22px;line-height:1.2;letter-spacing:-.02em;margin:12px 0 4px}
+.m{color:var(--m)}.sm{font-size:12px}.c{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:28px}
+.g2{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-bottom:20px}.g3{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:800px){.g2,.g3{grid-template-columns:1fr!important}h1{font-size:32px}.tabs a{padding:8px 10px}nav>.btn{display:none}.bar{grid-template-columns:100px 1fr 36px}.sel label{min-width:0;flex:1}}
+select,input,textarea{font:inherit;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:#fff;width:100%}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:28px}.sel{display:flex;gap:12px}.sel label{font-size:12px;min-width:140px}
+.pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--bd);border-radius:99px;padding:5px 12px;white-space:nowrap}.pill:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--r)}
+.row{display:flex;align-items:center;gap:16px;justify-content:space-between;padding:14px 0;border-top:1px solid var(--bd);text-decoration:none;color:inherit}
+.bar{display:grid;grid-template-columns:140px 1fr 40px;gap:12px;align-items:center;margin:10px 0;font-size:12px}.tr{height:6px;background:var(--s);border-radius:9px;overflow:hidden}.tr b{display:block;height:100%;background:var(--r);border-radius:9px}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--s);font-size:12px;margin:2px;white-space:nowrap}.chip.r{background:#FEE2E2;color:var(--r2)}
+.dc{border:1px solid var(--bd);border-radius:12px;padding:20px;cursor:pointer;background:#fff}.dc.on{border-color:var(--r);box-shadow:0 0 0 1px var(--r)}
+.q{display:block;padding:12px 14px;border:1px solid var(--bd);border-radius:10px;margin:8px 0;cursor:pointer}.q.on{border-color:var(--r);background:#FEF2F2}
+.nv{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.nv button{aspect-ratio:1;border:1px solid var(--bd);border-radius:8px;background:#fff;cursor:pointer;font:inherit}
+.nv .d{background:#52525B;color:#fff}.nv .fl{border-color:var(--r);color:var(--r)}.nv .cur{background:var(--r);color:#fff;border-color:var(--r)}
+details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+</style></head><body>
+<nav><a class="logo" href="#/"><span class="lg"><i></i></span>Exam Focus</a>
+<div class="tabs"><a data-p="d" href="#/">Dashboard</a><a data-p="sources" href="#/sources">Sources</a><a data-p="courses" href="#/courses">Courses</a><a data-p="results" href="#/results">Results</a></div>
+<a class="btn" href="#/generate">+ Generate exam</a></nav>
+<main id="app"></main>
+<script>
+const $=(s)=>document.querySelector(s),A=$("#app");
+const esc=(s)=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+if(!localStorage.uid)localStorage.uid=prompt("Paste your user ID (from the users table)")||"";
+const api=async(p,o={})=>{const r=await fetch(p,{...o,headers:{"x-user-id":localStorage.uid,...(o.headers||{})}});const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j};
+const post=(p,b)=>api(p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+const S={course:localStorage.course||"",lect:localStorage.lect||""},E={},R={};
+const L=(i)=>String.fromCharCode(65+i),dt=(d)=>new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+const cn=()=>S.courses?.find(c=>c.id===S.course)?.title||"";
+const ring=(v,l)=>`<svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="37" fill="none" stroke="#E4E4E7" stroke-width="5"/><circle cx="42" cy="42" r="37" fill="none" stroke="#DC2626" stroke-width="5" stroke-linecap="round" stroke-dasharray="${2.325*v} 233" transform="rotate(-90 42 42)"/><text x="42" y="44" text-anchor="middle" font-size="22" font-weight="700">${v}</text><text x="42" y="58" text-anchor="middle" font-size="8" fill="#71717A" letter-spacing="1">${l}</text></svg>`;
+const bars=(a)=>a.map(r=>`<div class="bar"><span>${esc(r.title)}</span><div class="tr"><b style="width:${r.pct}%"></b></div><span class="m">${r.pct}%</span></div>`).join("");
+const arow=(r)=>`<a class="row" href="#/results/${r.id}"><div><div>${esc(cn())}</div><div class="m sm">${dt(r.submitted_at)} · ${esc(r.difficulty)} · ${r.n} questions</div></div><b style="font-size:18px;color:${r.pct<60?"#B91C1C":"inherit"}">${r.pct}%</b></a>`;
+async function init(){if(!S.courses)[S.courses,S.lects]=await Promise.all([api("/courses"),api("/lecturers")]);if(!S.courses.find(c=>c.id===S.course))S.course=S.courses[0]?.id||""}
+function pick(k,v){S[k]=v;localStorage[k]=v;go()}
+
+async function go(){const[,a,b]=(location.hash.slice(1)||"/").split("/");
+ document.querySelectorAll(".tabs a").forEach(x=>x.classList.toggle("on",x.dataset.p===(a||"d")));
+ $("nav").hidden=a==="exam";
+ try{await(R[a||"d"]||R.d)(b)}catch(e){A.innerHTML=`<p class="m">${esc(e.message)}</p>`}}
+addEventListener("hashchange",go);
+
+R.d=async()=>{await init();
+ if(!S.courses.length){A.innerHTML=`<p class="m">No courses yet. Add one to the courses table.</p>`;return}
+ const q=`courseId=${S.course}&lecturerId=${S.lect}`,d=await api("/dashboard?"+q);
+ const today=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).toUpperCase();
+ A.innerHTML=`<div class="hd"><div><div class="k">${today}</div><h1>Make your next hour count.</h1><p class="m">A clear picture of what to practise next.</p></div>
+ <div class="sel"><label class="m">Course<select onchange="pick('course',this.value)">${S.courses.map(x=>`<option value="${x.id}" ${x.id===S.course?"selected":""}>${esc(x.code)}</option>`).join("")}</select></label>
+ <label class="m">Lecturer pattern<select onchange="pick('lect',this.value)"><option value="">Any lecturer</option>${S.lects.map(x=>`<option value="${x.id}" ${x.id===S.lect?"selected":""}>${esc(x.name)}</option>`).join("")}</select></label></div></div>
+ <div class="g2"><div class="c"><div style="display:flex;justify-content:space-between;gap:16px"><div><span class="pill k">Your study snapshot</span><h2 style="margin-top:20px">${esc(cn())}</h2><p class="m">Based on your recent mock exams and source material.</p></div>${d.readiness==null?"":ring(d.readiness,"READINESS")}</div>
+ <hr style="border:0;border-top:1px solid var(--bd);margin:24px 0 16px"><div style="display:flex;justify-content:space-between"><b>Topics tested most</b><span class="m sm">in past papers</span></div>
+ ${d.topics.length?bars(d.topics):`<p class="m">Upload past questions to see which topics get tested.</p>`}<a class="btn w" style="margin-top:16px" href="#/generate">Start mock exam →</a></div>
+ <div class="c" style="display:flex;flex-direction:column"><div class="k">Recent practice</div><h2>Keep your rhythm.</h2><div style="margin-top:12px">${d.recent.length?d.recent.map(arow).join(""):`<p class="m">No attempts yet.</p>`}</div><a href="#/results" class="m" style="text-decoration:none;margin-top:auto;padding-top:16px">View all attempts →</a></div></div>
+ <div class="g3"><div class="c" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:22px"><div><b>Your source library</b><div class="m sm">${d.sources} ready source${d.sources==1?"":"s"} · Past questions, notes and CCMAS</div></div><a class="btn o" href="#/sources">Manage →</a></div>
+ <a class="c" href="#/${d.weak?"generate/weak":"sources"}" style="background:var(--s);text-decoration:none;color:inherit;padding:22px"><div class="k">Suggested next step</div><b>${d.weak?"Revisit "+esc(d.weak.toLowerCase()):"Upload a past paper"}</b><div class="m sm">${d.weak?"One of your lower-scoring topics.":"So Exam Focus can learn how your lecturer sets questions."}</div></a></div>`};
+
+R.courses=async()=>{S.courses=null;await init();
+ const tp=S.course?await api(`/courses/${S.course}/topics`):[];
+ A.innerHTML=`<div class="k">Setup</div><h1>Courses</h1>
+ <div class="g2" style="margin-top:24px"><div>
+ <div class="c" style="margin-bottom:20px"><b>Add a course</b><div style="display:grid;gap:10px;margin:12px 0"><input id="cc" placeholder="Course code, e.g. PHS 208"><input id="ct" placeholder="Course title"><input id="cd" placeholder="Department (optional)"><input id="cl" type="number" placeholder="Level (optional)"></div><button class="btn w" onclick="addCourse(this)">Add course</button></div>
+ <div class="c"><b>Add a lecturer</b><div style="display:grid;gap:10px;margin:12px 0"><input id="ln" placeholder="Lecturer name"></div><button class="btn w" onclick="addLect(this)">Add lecturer</button></div></div>
+ <div class="c"><div class="k">Topics</div><select style="margin:8px 0" onchange="pick('course',this.value)">${S.courses.map(x=>`<option value="${x.id}" ${x.id===S.course?"selected":""}>${esc(x.code)} · ${esc(x.title)}</option>`).join("")}</select>
+ ${tp.length?tp.map(t=>`<span class="chip">${esc(t.title)}</span>`).join(""):`<p class="m">No topics yet.</p>`}
+ <hr style="border:0;border-top:1px solid var(--bd);margin:20px 0 14px"><b>Add topics from the CCMAS</b><p class="m sm">Paste the course content from the CCMAS, or upload that page as a PDF, then review the list before saving.</p>
+ <textarea id="tx" rows="5" placeholder="Paste CCMAS course content here"></textarea><input id="tf" type="file" accept="application/pdf" style="margin-top:8px"><button class="btn o w" style="margin-top:8px" onclick="extractTopics(this)">Extract topics</button>
+ <textarea id="tl" rows="8" placeholder="One topic per line. You can also type topics yourself." style="margin-top:12px"></textarea><button class="btn w" style="margin-top:8px" onclick="saveTopics(this)">Save topics</button></div></div>`};
+async function addCourse(b){b.disabled=true;try{const r=await post("/courses",{code:$("#cc").value,title:$("#ct").value,department:$("#cd").value,level:$("#cl").value});S.course=r.id;localStorage.course=r.id;await R.courses()}catch(e){alert(e.message);b.disabled=false}}
+async function addLect(b){b.disabled=true;try{await post("/lecturers",{name:$("#ln").value});await R.courses()}catch(e){alert(e.message);b.disabled=false}}
+async function extractTopics(b){const fd=new FormData(),f=$("#tf").files[0];if(f)fd.append("file",f);else fd.append("text",$("#tx").value);
+ b.disabled=true;b.textContent="Reading…";try{const r=await api(`/courses/${S.course}/topics/extract`,{method:"POST",body:fd});$("#tl").value=r.topics.join("\n")}catch(e){alert(e.message)}b.disabled=false;b.textContent="Extract topics"}
+async function saveTopics(b){const topics=$("#tl").value.split("\n").map(x=>x.trim()).filter(Boolean);if(!topics.length)return alert("Add at least one topic.");
+ b.disabled=true;try{await post(`/courses/${S.course}/topics`,{topics});await R.courses()}catch(e){alert(e.message);b.disabled=false}}
+R.sources=async()=>{await init();
+ const[p,src]=await Promise.all([api(`/pattern?courseId=${S.course}&lecturerId=${S.lect}`),api("/sources?courseId="+S.course)]);
+ const tm=p?.profile?.typeMix||[],tot=tm.reduce((s,x)=>s+x.n,0)||1;
+ A.innerHTML=`<div class="k">${esc(cn())}</div><h1>Your source library</h1>
+ <div class="g2" style="margin-top:24px"><div><div class="c" style="margin-bottom:20px"><b>Upload a PDF</b><div style="display:grid;gap:10px;margin:12px 0"><select id="k"><option value="past_question">Past questions</option><option value="note">Notes</option><option value="textbook">Textbook</option><option value="ccmas">CCMAS</option></select><input id="y" type="number" placeholder="Exam year (past questions)"><input id="f" type="file" accept="application/pdf"></div><button class="btn w" onclick="up(this)">Upload</button></div>
+ <div class="c" style="padding:8px 28px">${src.length?src.map(x=>`<div class="row" style="border-top:0;border-bottom:1px solid var(--bd)"><div><div>${esc(x.name)}</div><div class="m sm">${esc(x.kind.replace("_"," "))}${x.year?" · "+x.year:""}${x.lecturer?" · "+esc(x.lecturer):""}${x.needs_ocr?" · scanned, needs OCR":""}</div></div><span style="display:flex;gap:8px;align-items:center"><span class="chip ${x.status==="ready"?"":"r"}">${x.status}</span><button class="btn o" style="padding:4px 10px" onclick="delSrc('${x.id}')">Delete</button></span></div>`).join(""):`<p class="m" style="padding:16px 0">No sources yet.</p>`}</div></div>
+ <div class="c"><div class="k">Lecturer pattern</div>${p?`<h2>${Math.round(p.confidence*100)}% confidence</h2><div class="tr"><b style="width:${p.confidence*100}%"></b></div><p class="m sm">${p.sample_size} paper${p.sample_size==1?"":"s"} analysed${p.confidence<.6?" · upload more past papers":""}</p><div>${tm.map(x=>`<span class="chip">${esc(x.q_type)} ${Math.round(100*x.n/tot)}%</span>`).join("")}</div><div style="margin-top:8px">${(p.profile.commonVerbs||[]).map(v=>`<span class="chip r">${esc(v.command_verb)}</span>`).join("")}</div>`:`<p class="m">Upload past questions to learn how this lecturer sets exams.</p>`}</div></div>`};
+async function delSrc(id){if(!confirm("Delete this source and everything learned from it?"))return;try{await api("/sources/"+id,{method:"DELETE"});R.sources()}catch(e){alert(e.message)}}
+async function up(b){const f=$("#f").files[0];if(!f)return alert("Choose a PDF first.");
+ const fd=new FormData();fd.append("courseId",S.course);fd.append("kind",$("#k").value);fd.append("lecturerId",S.lect);fd.append("year",$("#y").value);fd.append("file",f);
+ b.disabled=true;b.textContent="Processing… this can take a minute";
+ try{await api("/documents",{method:"POST",body:fd});R.sources()}catch(e){alert(e.message);b.disabled=false;b.textContent="Upload"}}
+
+R.generate=async(mode)=>{await init();E.diff=E.diff||"medium";const weak=mode==="weak"?await api("/weak-topics?courseId="+S.course):[];E.focus=weak.length?weak.map(w=>w.id):null;
+ A.innerHTML=`<div class="k">New mock exam</div><h1>Generate exam</h1><p class="m">${esc(cn())}${S.lect?" · "+esc(S.lects.find(l=>l.id===S.lect)?.name||""):""}</p>
+ ${mode==="weak"?`<div class="c" style="margin-top:20px;padding:18px"><b>Practising your weakest topics</b>${weak.length?`<div style="margin-top:8px">${weak.map(w=>`<span class="chip r">${esc(w.title)} · ${w.pct}%</span>`).join("")}</div>`:`<p class="m sm">Finish an exam first so we can find your weak topics. A normal exam will be generated instead.</p>`}</div>`:""}
+ <div class="g3" style="grid-template-columns:repeat(3,1fr);margin-top:24px">${[["easy","Recall and definitions, single step."],["medium","Application, two to three steps."],["hard","Analysis, multi-part and calculations."]].map(([k,t])=>`<div class="dc ${E.diff===k?"on":""}" data-k="${k}" onclick="E.diff='${k}';document.querySelectorAll('.dc').forEach(x=>x.classList.toggle('on',x.dataset.k==='${k}'))"><b style="text-transform:capitalize">${k}</b><p class="m sm">${t}</p></div>`).join("")}</div>
+ <div class="c" style="margin-top:20px;display:flex;gap:16px;align-items:end;flex-wrap:wrap"><label style="flex:1;min-width:140px" class="m">Questions<input id="n" type="number" value="10" min="3" max="30"></label><button class="btn" id="gb" style="flex:2;min-width:200px" onclick="gen()">Generate exam</button></div>`};
+async function gen(){const b=$("#gb");b.disabled=true;b.textContent="Writing your exam…";const t0=Date.now(),iv=setInterval(()=>b.textContent="Writing your exam… "+Math.floor((Date.now()-t0)/1000)+"s",1000);
+ try{const g=await post("/exams",{courseId:S.course,lecturerId:S.lect||null,difficulty:E.diff,count:+$("#n").value,focus:E.focus});
+  E.warn=[Number(g.confidence)<.6&&"Low style confidence: upload more past papers.",g.unverified&&`${g.unverified} answer(s) couldn't be verified.`].filter(Boolean).join(" ");
+  location.hash="#/exam/"+g.examId}catch(e){alert(e.message);b.disabled=false;b.textContent="Generate exam"}finally{clearInterval(iv)}}
+
+R.exam=async(id)=>{if(E.id!==id){const x=await api("/exams/"+id);E.qs=x.questions;E.dur=x.duration_minutes;Object.assign(E,{id,i:0,ans:{},fl:new Set(),t0:Date.now()});clearInterval(E.iv);
+  E.iv=setInterval(()=>{const t=$("#tm");if(!t)return;const s=Math.floor((Date.now()-E.t0)/1000),mm=(n)=>Math.floor(n/60)+":"+String(n%60).padStart(2,"0");
+   if(E.dur){const left=Math.max(E.dur*60-s,0);t.textContent=mm(left)+" left";if(left===0){clearInterval(E.iv);alert("Time is up. Submitting your answers.");fin(true)}}else t.textContent=mm(s)},1000)}drawExam()};
+function drawExam(){const q=E.qs[E.i],n=E.qs.length,done=E.qs.filter(x=>E.ans[x.id]).length;
+ A.innerHTML=`<div style="position:sticky;top:0;background:var(--bg);padding:12px 0;z-index:5"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><b>Exam Focus</b><span class="m" id="tm"></span><button class="btn" onclick="fin()">Submit</button></div><div class="tr" style="margin-top:12px"><b style="width:${100*done/n}%"></b></div></div>
+ <div class="g2" style="grid-template-columns:2fr 1fr;margin-top:20px"><div class="c">${E.warn?`<p class="m sm">${esc(E.warn)}</p>`:""}<div class="k">${esc(q.section||"Question")} · Q${q.position} of ${n} · ${q.marks} marks</div><h2 style="font-size:18px;font-weight:500;line-height:1.5;margin:12px 0">${esc(q.text)}</h2>
+ ${q.q_type==="mcq"&&Array.isArray(q.options)?q.options.map((o,i)=>`<label class="q ${E.ans[q.id]===L(i)?"on":""}"><input type="radio" hidden name="a" onchange="E.ans['${q.id}']='${L(i)}';drawExam()">${L(i)}. ${esc(String(o).replace(/^\(?[A-Da-d][).:]\s*/,""))}</label>`).join(""):`<textarea rows="8" oninput="E.ans['${q.id}']=this.value" placeholder="Your answer">${esc(E.ans[q.id]||"")}</textarea>`}
+ <div style="display:flex;gap:8px;margin-top:16px"><button class="btn o" onclick="mv(-1)">Previous</button><button class="btn o" onclick="fl('${q.id}')">${E.fl.has(q.id)?"Unflag":"Flag"}</button><button class="btn" style="margin-left:auto" onclick="mv(1)">Next</button></div></div>
+ <div class="c"><div class="k" style="margin-bottom:12px">Questions</div><div class="nv">${E.qs.map((x,i)=>`<button class="${i===E.i?"cur":E.fl.has(x.id)?"fl":E.ans[x.id]?"d":""}" onclick="E.i=${i};drawExam()">${i+1}</button>`).join("")}</div></div></div>`}
+function mv(d){E.i=Math.max(0,Math.min(E.qs.length-1,E.i+d));drawExam()}
+function fl(id){E.fl.has(id)?E.fl.delete(id):E.fl.add(id);drawExam()}
+async function fin(force){const un=E.qs.filter(q=>!E.ans[q.id]).length;if(!force&&!confirm(`Submit now? ${un} unanswered, ${E.fl.size} flagged.`))return;
+ try{const r=await post(`/exams/${E.id}/submit`,{answers:E.qs.map(q=>({examQuestionId:q.id,response:E.ans[q.id]||""}))});clearInterval(E.iv);S.last=r;location.hash="#/results/"+r.attemptId}catch(e){alert(e.message)}}
+
+R.results=async(id)=>{await init();
+ if(!id){const a=await api("/attempts?courseId="+S.course);A.innerHTML=`<div class="k">History</div><h1>Results</h1><div class="c" style="padding:8px 28px;margin-top:24px">${a.length?a.map(arow).join(""):`<p class="m" style="padding:16px 0">No attempts yet.</p>`}</div>`;return}
+ const r=await api("/attempts/"+id);if(S.last?.attemptId===id)r.results.forEach(x=>x.feedback=S.last.results.find(y=>y.position===x.position)?.feedback);
+ const pct=Math.round(100*r.score/Math.max(r.total,1)),tp={};r.results.forEach(x=>{if(x.topic){const t=tp[x.topic]??=[0,0];t[0]+=x.score;t[1]+=x.max}});
+ A.innerHTML=`<a class="m" href="#/results" style="text-decoration:none">← All results</a>
+ <div class="c" style="display:flex;gap:24px;align-items:center;margin:16px 0;flex-wrap:wrap">${ring(pct,"SCORE")}<div><h2 style="margin:0">${r.score} of ${r.total} marks</h2><div class="m">${esc(r.difficulty)} · ${esc(cn())}</div></div><span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><a class="btn o" href="#/generate/weak">Practice weak topics</a><a class="btn" href="#/generate">New exam</a></span></div>
+ ${Object.keys(tp).length?`<div class="c" style="margin-bottom:16px"><b>Score by topic</b>${bars(Object.entries(tp).map(([title,[s,m]])=>({title,pct:Math.round(100*s/Math.max(m,1))})))}</div>`:""}
+ <div class="c" style="padding:8px 28px">${r.results.map(x=>`<details><summary><b>Q${x.position}</b>${x.verified===false?`<span class="chip">not verified</span>`:""}<span style="color:${x.score>=x.max?"inherit":"#B91C1C"}">${x.score}/${x.max}</span></summary><p>${esc(x.question)}</p><p class="m">Your answer: ${esc(x.response||"—")}</p>${x.feedback?`<p>${esc(x.feedback)}</p>`:""}<p><b>Model answer:</b> ${esc(x.answer)}</p><p class="m">${esc(x.explanation)}</p></details>`).join("")}</div>`};
+go(); // run only after every route (R.*) is defined
+</script></body></html>
