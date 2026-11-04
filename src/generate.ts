@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { assertCourseOwner, assertLecturerOwner, db, embed, llmJson, normOptions } from "./lib.js";
 import { bankerTopics, buildExam, topChunks } from "../engine.mjs";
 
@@ -83,12 +84,14 @@ STYLE PROFILE: ${JSON.stringify(sp.profile)}
 DIFFICULTY (${o.difficulty}): ${DIFF[o.difficulty]}
 Use only facts present in the provided source chunks. Follow the requested question type and cognitive level. Past-paper examples are style references only: do not copy their question or use them as factual sources. For mcq include "options" (4) and put the correct option letter in "answer". Keep explanations to one or two sentences.`;
   const size = Math.max(5, Math.ceil(n / 3));
+  const variationId = randomUUID();
   const jobs: Promise<any>[] = [];
   for (let s = 0; s < n; s += size) {
     const slice = plan.slice(s, s + size), ctx: Record<string, unknown> = {};
     slice.forEach((t) => (ctx[t.topic.id] = context[t.topic.id]));
     jobs.push(llmJson<any>(system,
       `Write ${slice.length} questions, one per plan entry, in order.
+EXAM VARIATION ID: ${variationId}. This is a new, independent exam. Write fresh question wording and scenarios; do not reproduce a previous generated exam.
 PLAN: ${JSON.stringify(slice.map((t, j) => ({
         i: s + j,
         topic_id: t.topic.id,

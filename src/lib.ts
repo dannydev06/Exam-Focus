@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config({ override: true }); // values in .env win over leftover shell variables like PGPASSWORD
 import pg from "pg";
 import { createHash } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 export const db = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 db.query("SELECT 1").then(
@@ -9,6 +10,79 @@ db.query("SELECT 1").then(
   (e) => console.error("Database connection failed:", e.message, "| user:", process.env.PGUSER, "| password length:", process.env.PGPASSWORD?.length),
 );
 const env = process.env;
+const aiUser = new AsyncLocalStorage<string>();
+export function runWithAIUser<T>(userId: string | undefined, fn: () => T): T {
+  return userId ? aiUser.run(userId, fn) : fn();
+}
+
+function configuredLimit(name: string, fallback: number): number {
+  const value = Number(env[name] ?? fallback);
+  if (!Number.isSafeInteger(value) || value < 1)
+    throw new Error(`${name} must be a positive whole number.`);
+  return value;
+}
+
+const userDailyAICallLimit = configuredLimit("AI_USER_DAILY_CALL_LIMIT", 40);
+const globalDailyAICallLimit = configuredLimit("AI_GLOBAL_DAILY_CALL_LIMIT", 1000);
+let aiUsageReady: Promise<void> | undefined;
+
+async function ensureAIUsageTable(): Promise<void> {
+  if (!aiUsageReady) {
+    aiUsageReady = db.query(`CREATE TABLE IF NOT EXISTS ai_request_usage (
+      usage_day date NOT NULL,
+      scope text NOT NULL,
+      calls int NOT NULL DEFAULT 0,
+      PRIMARY KEY (usage_day, scope)
+    )`).then(() => undefined);
+  }
+  return aiUsageReady;
+}
+
+export async function aiUsage(userId: string) {
+  await ensureAIUsageTable();
+  const { rows: [row] } = await db.query(
+    `SELECT
+       coalesce(max(calls) FILTER (WHERE scope=$1),0)::int AS user_calls,
+       coalesce(max(calls) FILTER (WHERE scope='global'),0)::int AS global_calls
+     FROM ai_request_usage
+     WHERE usage_day=(now() AT TIME ZONE 'UTC')::date AND scope IN ($1,'global')`,
+    [`user:${userId}`]);
+  return {
+    user: { used: row.user_calls, limit: userDailyAICallLimit, remaining: Math.max(0, userDailyAICallLimit - row.user_calls) },
+    platform: { used: row.global_calls, limit: globalDailyAICallLimit, remaining: Math.max(0, globalDailyAICallLimit - row.global_calls) },
+    resetsAt: "00:00 UTC",
+  };
+}
+
+async function reserveAIRequest(): Promise<void> {
+  const userId = aiUser.getStore();
+  if (!userId) throw Object.assign(new Error("AI requests must be made from a signed-in account."), { statusCode: 401 });
+  await ensureAIUsageTable();
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const day = "(now() AT TIME ZONE 'UTC')::date";
+    const global = await client.query(
+      `INSERT INTO ai_request_usage (usage_day, scope, calls) VALUES (${day},'global',1)
+       ON CONFLICT (usage_day,scope) DO UPDATE SET calls=ai_request_usage.calls+1
+       WHERE ai_request_usage.calls < $1 RETURNING calls`, [globalDailyAICallLimit]);
+    if (!global.rowCount)
+      throw Object.assign(new Error("The shared AI allowance is temporarily exhausted for today. Please try again after 00:00 UTC."), { statusCode: 429 });
+    const user = await client.query(
+      `INSERT INTO ai_request_usage (usage_day, scope, calls) VALUES (${day},$1,1)
+       ON CONFLICT (usage_day,scope) DO UPDATE SET calls=ai_request_usage.calls+1
+       WHERE ai_request_usage.calls < $2 RETURNING calls`, [`user:${userId}`, userDailyAICallLimit]);
+    if (!user.rowCount)
+      throw Object.assign(new Error("You’ve reached today’s AI request allowance. You can still study your notes and review saved results; your allowance resets at 00:00 UTC."), { statusCode: 429 });
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
 export async function assertCourseOwner(courseId: string, userId: string) {
   const { rows } = await db.query(`SELECT id FROM courses WHERE id=$1 AND owner_id=$2`, [courseId, userId]);
   if (!rows.length) throw Object.assign(new Error("Course not found."), { statusCode: 404 });
@@ -81,6 +155,7 @@ async function setCached(key: string, kind: string, value: unknown): Promise<voi
 async function call(fn: () => Promise<Response>, retries = 5): Promise<any> {
   for (let n = 0; ; n++) {
     let r: Response;
+    await reserveAIRequest();
     try { r = await fn(); }
     catch (e: any) { // network-level failure: no HTTP response at all
       const why = e.cause?.code ?? e.cause?.message ?? e.message;
@@ -116,12 +191,13 @@ export async function embed(texts: string[]): Promise<string[]> {
   const model = EMB === "gemini" ? "gemini-embedding-001:768" : env.EMBED_MODEL ?? OAI_EMB[EMB]?.[2] ?? "";
   const kind = `embedding:${EMB}:${model}`;
   const keys = texts.map((text) => cacheKey(kind, text));
+  const scopedKeys = keys.map((key) => cacheKey("user-ai-cache", { userId: aiUser.getStore(), key }));
   if (await ensureAICache()) {
     try {
-      const { rows } = await db.query(`SELECT key, payload FROM ai_cache WHERE key=ANY($1::text[])`, [keys]);
+      const { rows } = await db.query(`SELECT key, payload FROM ai_cache WHERE key=ANY($1::text[])`, [scopedKeys]);
       const cached = new Map(rows.map((row) => [row.key, row.payload]));
-      if (keys.every((key) => Array.isArray(cached.get(key))))
-        return keys.map((key) => JSON.stringify(cached.get(key)));
+      if (scopedKeys.every((key) => Array.isArray(cached.get(key))))
+        return scopedKeys.map((key) => JSON.stringify(cached.get(key)));
     } catch (e) {
       console.warn("Embedding cache read failed:", e instanceof Error ? e.message : String(e));
     }
@@ -150,7 +226,7 @@ export async function embed(texts: string[]): Promise<string[]> {
       vecs = j.data.map((d: any) => d.embedding);
     }
     out.push(...vecs.map((v) => `[${v.join(",")}]`));
-    await Promise.all(vecs.map((v, j) => setCached(keys[i + j], kind, v)));
+    await Promise.all(vecs.map((v, j) => setCached(scopedKeys[i + j], kind, v)));
   }
   return out;
 }
@@ -200,7 +276,7 @@ async function llmOnce(p: string, primary: boolean, system: string, user: string
 export async function llmJson<T>(system: string, user: string): Promise<T> {
   system += "\nReturn ONLY valid JSON, no markdown fences, no commentary.";
   const models = CHAIN.map((p) => [p, env.LLM_MODEL, env[p === "anthropic" ? "CLAUDE_MODEL" : `${p.toUpperCase()}_MODEL`] ?? null]);
-  const key = cacheKey("llm-json", { models, system, user });
+  const key = cacheKey("llm-json", { userId: aiUser.getStore(), models, system, user });
   const cached = await getCached<T>(key);
   if (cached !== undefined) return cached;
   if (!CHAIN.length) throw new Error("No AI provider configured: set LLM_PROVIDER and its API key in .env.");
@@ -215,6 +291,7 @@ export async function llmJson<T>(system: string, user: string): Promise<T> {
       await setCached(key, "llm-json", value);
       return value;
     } catch (e: any) {
+      if (e.statusCode === 429) throw e;
       errors.push(`${p}: ${String(e.message).slice(0, 160)}`);
       if (!last) console.warn(`AI provider ${p} failed, trying ${CHAIN[i + 1]}: ${String(e.message).slice(0, 120)}`);
     }

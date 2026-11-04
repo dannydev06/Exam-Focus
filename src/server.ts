@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { assertCourseOwner, assertLecturerOwner, db, normOptions } from "./lib.js";
+import { aiUsage, assertCourseOwner, assertLecturerOwner, db, normOptions, runWithAIUser } from "./lib.js";
 import { ingest } from "./ingest.js";
 import { buildStyleProfile } from "./style.js";
 import { generateExam } from "./generate.js";
@@ -16,10 +16,10 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 
 
 const uid = (req: any) => req.userId as string;
 const h = (fn: (req: any, res: any) => Promise<any>) => (req: any, res: any) =>
-  fn(req, res).catch((e) => {
+  runWithAIUser(req.userId, () => fn(req, res).catch((e) => {
     console.error(e);
     res.status(e.statusCode ?? 500).json({ error: e.message });
-  });
+  }));
 
 await ensureTenantSchema();
 app.use(requireSameOrigin);
@@ -30,6 +30,9 @@ app.get("/auth/me", authenticate, h(async (req, res) => {
   res.json(user);
 }));
 app.use(authenticate);
+app.get("/ai-usage", h(async (req, res) => {
+  res.json(await aiUsage(uid(req)));
+}));
 
 // Upload a PQ / note / textbook / CCMAS PDF
 app.post("/documents", upload.array("file", 30), h(async (req, res) => {
