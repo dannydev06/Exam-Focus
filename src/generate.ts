@@ -1,4 +1,4 @@
-import { db, embed, llmJson, normOptions } from "./lib.js";
+import { assertCourseOwner, assertLecturerOwner, db, embed, llmJson, normOptions } from "./lib.js";
 import { bankerTopics, buildExam, topChunks } from "../engine.mjs";
 
 type Diff = "easy" | "medium" | "hard";
@@ -11,6 +11,8 @@ const QTYPES = new Set(["mcq", "short_answer", "theory", "calculation"]);
 const topicVec = new Map<string, number[]>(); // cached topic-title embeddings (cleared on restart)
 
 export async function generateExam(o: { userId: string; courseId: string; lecturerId: string | null; difficulty: Diff; count?: number; focus?: string[]; lowCredit?: boolean }) {
+  await assertCourseOwner(o.courseId, o.userId);
+  if (o.lecturerId) await assertLecturerOwner(o.lecturerId, o.userId);
   const { rows: [sp] } = await db.query(
     `SELECT * FROM style_profiles WHERE course_id=$1 AND lecturer_id IS NOT DISTINCT FROM $2::uuid ORDER BY version DESC LIMIT 1`,
     [o.courseId, o.lecturerId]);

@@ -1,4 +1,4 @@
-import { db } from "./lib.js";
+import { assertCourseOwner, db } from "./lib.js";
 import { readiness } from "../engine.mjs";
 
 export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
@@ -12,6 +12,7 @@ export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
   // Topic readiness uses the engine's recency-aware mastery score.
   app.get("/dashboard", h(async (req: any, res: any) => {
     const { courseId } = req.query, lec = req.query.lecturerId || null, u = uid(req);
+    await assertCourseOwner(courseId, u);
     const [p] = await rows(`SELECT count(distinct document_id)::int n FROM pq_questions WHERE course_id=$1 AND ($2::uuid IS NULL OR lecturer_id=$2::uuid)`, [courseId, lec]);
     const topics = await rows(
       `SELECT t.title, round(100.0*count(distinct q.document_id)/greatest(1,$3::int))::int pct
@@ -46,7 +47,10 @@ export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
     });
   }));
 
-  app.get("/attempts", h(async (req: any, res: any) => res.json(await attempts(uid(req), req.query.courseId))));
+  app.get("/attempts", h(async (req: any, res: any) => {
+    await assertCourseOwner(req.query.courseId, uid(req));
+    res.json(await attempts(uid(req), req.query.courseId));
+  }));
 
   app.get("/attempts/:id", h(async (req: any, res: any) => {
     const [a] = await rows(
@@ -60,12 +64,16 @@ export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
     res.json({ ...a, results });
   }));
 
-  app.get("/sources", h(async (req: any, res: any) => res.json(await rows(
-    `SELECT d.id, d.kind, d.year, d.status, d.needs_ocr, d.storage_key name, d.created_at, l.name lecturer
-     FROM documents d LEFT JOIN lecturers l ON l.id=d.lecturer_id
-     WHERE d.user_id=$1 AND d.course_id=$2 ORDER BY d.created_at DESC`, [uid(req), req.query.courseId]))));
+  app.get("/sources", h(async (req: any, res: any) => {
+    await assertCourseOwner(req.query.courseId, uid(req));
+    res.json(await rows(
+      `SELECT d.id, d.kind, d.year, d.status, d.needs_ocr, d.storage_key name, d.created_at, l.name lecturer
+       FROM documents d LEFT JOIN lecturers l ON l.id=d.lecturer_id
+       WHERE d.user_id=$1 AND d.course_id=$2 ORDER BY d.created_at DESC`, [uid(req), req.query.courseId]));
+  }));
 
   app.get("/pattern", h(async (req: any, res: any) => {
+    await assertCourseOwner(req.query.courseId, uid(req));
     const [sp] = await rows(
       `SELECT profile, sample_size, confidence::float confidence FROM style_profiles
        WHERE course_id=$1 AND lecturer_id IS NOT DISTINCT FROM $2::uuid ORDER BY version DESC LIMIT 1`,

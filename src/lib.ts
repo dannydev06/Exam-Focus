@@ -9,6 +9,14 @@ db.query("SELECT 1").then(
   (e) => console.error("Database connection failed:", e.message, "| user:", process.env.PGUSER, "| password length:", process.env.PGPASSWORD?.length),
 );
 const env = process.env;
+export async function assertCourseOwner(courseId: string, userId: string) {
+  const { rows } = await db.query(`SELECT id FROM courses WHERE id=$1 AND owner_id=$2`, [courseId, userId]);
+  if (!rows.length) throw Object.assign(new Error("Course not found."), { statusCode: 404 });
+}
+export async function assertLecturerOwner(lecturerId: string, userId: string) {
+  const { rows } = await db.query(`SELECT id FROM lecturers WHERE id=$1 AND owner_id=$2`, [lecturerId, userId]);
+  if (!rows.length) throw Object.assign(new Error("Lecturer not found."), { statusCode: 404 });
+}
 // small automatic migration: saved feedback on written answers
 db.query("ALTER TABLE attempt_answers ADD COLUMN IF NOT EXISTS feedback text").catch(() => null);
 const EMB = env.EMBED_PROVIDER ?? "gemini"; // gemini | mistral | openrouter | openai

@@ -15,6 +15,7 @@ Upload past questions, lecture notes and the course syllabus. Exam Focus learns 
 - **Insights**: readiness score, topics tested most, results by topic, and weak-topic practice that builds an exam from the lowest-scoring topics.
 - **OCR for scans and photos**: scanned PDFs and phone photos of past papers are read locally with Tesseract (no API, no limits).
 - **Multiple courses**: add any course and switch between them while studying. Each course has its own topics, source library, exams, and progress; MBBS 214 is only the sample course.
+- **Private accounts**: students can sign up with an email and password. Courses, lecturers, uploads, exams, and results are scoped to the signed-in account; another account cannot access them.
 - **Course setup**: add courses and lecturers in the app, and extract a topic list from pasted CCMAS course content (reviewed before saving).
 
 ## How it works
@@ -57,13 +58,15 @@ psql -U postgres -d pqprep -f seed.sql      # prints your demo user id
 npm run dev                 # http://localhost:3000
 ```
 
-Open the app, paste the user id when asked, then select or add any course on the Courses page. For the demo course, upload the PDFs in `sample-data/` (the two past papers as "Past questions" with years 2023 and 2024, and the lecture notes as "Notes") and generate an exam.
+Open the app and create an account or sign in. The first run applies the account/session and course-ownership migration to the existing database. Existing course ownership is inferred from its source and exam records; if a course has records from multiple users, startup stops rather than expose them across accounts. Add a course on the Courses page, then upload your own past questions and notes. For the demo course, upload the PDFs in `sample-data/` (the two past papers as "Past questions" with years 2023 and 2024, and the lecture notes as "Notes") and generate an exam.
+
+Each account has a private copy of its courses and study data; this version does not yet support shared class workspaces. Use HTTPS when hosting publicly so session cookies are protected. Email verification and password-reset emails are not configured yet, so users should use an email address they can access and remember their password.
 
 Free API keys are enough to try it: see `.env.example` for the providers supported.
 
 ## Limitations and roadmap
 
-- Single-user prototype: no login yet.
+- No shared course workspaces, email verification, or self-service password reset yet.
 - OCR accuracy depends on scan quality; only the first 40 pages of a scanned PDF are read.
 - Uploaded files are parsed but not stored.
 

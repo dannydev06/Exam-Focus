@@ -14,6 +14,10 @@ function correctLetter(q: any): string | null {
 }
 
 export async function submitAttempt(userId: string, examId: string, answers: Ans[]) {
+  const { rows: [exam] } = await db.query(
+    `SELECT e.id FROM exams e JOIN courses c ON c.id=e.course_id
+     WHERE e.id=$1 AND c.owner_id=$2`, [examId, userId]);
+  if (!exam) throw Object.assign(new Error("Exam not found."), { statusCode: 404 });
   const { rows: qs } = await db.query(`SELECT * FROM exam_questions WHERE exam_id=$1 ORDER BY position`, [examId]);
   if (!qs.length) throw new Error("Exam not found.");
   const given = new Map(answers.map((a) => [a.examQuestionId, a]));

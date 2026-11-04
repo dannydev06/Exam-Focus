@@ -2,7 +2,7 @@
 <style>
 :root{--r:#DC2626;--r2:#B91C1C;--bd:#E4E4E7;--m:#71717A;--f:#18181B;--bg:#FAFAFA;--s:#F4F4F5}
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;font:14px/1.5 Inter,system-ui,sans-serif;background:var(--bg);color:var(--f)}
-nav{background:#fff;border-bottom:1px solid var(--bd);height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 max(16px,calc((100% - 1160px)/2))}
+nav{background:#fff;border-bottom:1px solid var(--bd);min-height:66px;display:flex;align-items:center;justify-content:space-between;padding:10px max(16px,calc((100% - 1160px)/2));gap:16px;flex-wrap:wrap}
 .logo{display:flex;gap:12px;align-items:center;font-weight:600;white-space:nowrap;text-decoration:none;color:inherit}
 .lg{width:32px;height:32px;border:1px solid var(--bd);border-radius:10px;display:grid;place-items:center;background:#FFF7F7}
 .lg i{width:16px;height:16px;border-radius:50%;display:block;background:radial-gradient(#DC2626 28%,#FFF7F7 30% 52%,#DC2626 54% 74%,#FFF7F7 76%)}
@@ -27,17 +27,21 @@ select,input,textarea{font:inherit;padding:10px 12px;border:1px solid var(--bd);
 .nv .d{background:#52525B;color:#fff}.nv .fl{border-color:var(--r);color:var(--r)}.nv .cur{background:var(--r);color:#fff;border-color:var(--r)}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:12px}
 </style></head><body>
-<nav><a class="logo" href="#/"><span class="lg"><i></i></span>Exam Focus</a>
+<nav hidden><a class="logo" href="#/"><span class="lg"><i></i></span>Exam Focus</a>
 <div class="tabs"><a data-p="d" href="#/">Dashboard</a><a data-p="sources" href="#/sources">Sources</a><a data-p="courses" href="#/courses">Courses</a><a data-p="results" href="#/results">Results</a></div>
-<a class="btn" href="#/generate">+ Generate exam</a></nav>
+<div style="display:flex;align-items:center;gap:12px"><a class="btn" href="#/generate">+ Generate exam</a><span id="who" class="m sm"></span><button class="btn o" onclick="signOut()">Sign out</button></div></nav>
 <main id="app"></main>
 <script>
 const $=(s)=>document.querySelector(s),A=$("#app");
 const esc=(s)=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-if(!localStorage.uid)localStorage.uid=prompt("Paste your user ID (from the users table)")||"";
-const api=async(p,o={})=>{const r=await fetch(p,{...o,headers:{"x-user-id":localStorage.uid,...(o.headers||{})}});const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j};
+const api=async(p,o={})=>{const r=await fetch(p,{credentials:"same-origin",...o,headers:{...(o.headers||{})}});const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j};
 const post=(p,b)=>api(p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
 const S={course:localStorage.course||"",lect:localStorage.lect||""},E={},R={};
+function authScreen(mode,message=""){A.innerHTML=`<div class="c" style="max-width:440px;margin:9vh auto"><div class="k">Exam Focus account</div><h1 style="font-size:30px">${mode==="signup"?"Create your account":"Welcome back"}</h1><p class="m">${message?esc(message):"Sign in to keep your courses and study progress private."}</p><form id="authForm" style="display:grid;gap:12px;margin-top:20px">${mode==="signup"?`<label class="m">Your name<input name="name" autocomplete="name" required maxlength="80"></label>`:""}<label class="m">Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label class="m">Password<input name="password" type="password" autocomplete="${mode==="signup"?"new-password":"current-password"}" minlength="10" maxlength="128" required><span class="sm">At least 10 characters</span></label><button class="btn w" type="submit">${mode==="signup"?"Create account":"Sign in"}</button></form><button class="btn o w" style="margin-top:10px" onclick="authScreen('${mode==="signup"?"login":"signup"}')">${mode==="signup"?"Already have an account? Sign in":"New here? Create an account"}</button></div>`;
+ $("#authForm").onsubmit=async ev=>{ev.preventDefault();const button=ev.currentTarget.querySelector("button[type=submit]"),values=Object.fromEntries(new FormData(ev.currentTarget));button.disabled=true;button.textContent="Please wait…";try{await post(`/auth/${mode}`,values);await enterApp()}catch(e){authScreen(mode,e.message)}};
+}
+async function enterApp(){const user=await api("/auth/me");$("#who").textContent=user.name;document.querySelector("nav").hidden=false;await go()}
+async function signOut(){try{await post("/auth/logout",{});document.querySelector("nav").hidden=true;authScreen("login","You are signed out.")}catch(e){alert(e.message)}}
 const L=(i)=>String.fromCharCode(65+i),dt=(d)=>new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
 const cn=()=>S.courses?.find(c=>c.id===S.course)?.title||"";
 const ring=(v,l)=>`<svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="37" fill="none" stroke="#E4E4E7" stroke-width="5"/><circle cx="42" cy="42" r="37" fill="none" stroke="#DC2626" stroke-width="5" stroke-linecap="round" stroke-dasharray="${2.325*v} 233" transform="rotate(-90 42 42)"/><text x="42" y="44" text-anchor="middle" font-size="22" font-weight="700">${v}</text><text x="42" y="58" text-anchor="middle" font-size="8" fill="#71717A" letter-spacing="1">${l}</text></svg>`;
@@ -135,5 +139,5 @@ R.results=async(id)=>{await init();
  <div class="c" style="display:flex;gap:24px;align-items:center;margin:16px 0;flex-wrap:wrap">${ring(pct,"SCORE")}<div><h2 style="margin:0">${r.score} of ${r.total} marks</h2><div class="m">${esc(r.difficulty)} · ${esc(cn())}</div></div><span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><a class="btn o" href="#/generate/weak">Practice weak topics</a><a class="btn" href="#/generate">New exam</a></span></div>
  ${Object.keys(tp).length?`<div class="c" style="margin-bottom:16px"><b>Score by topic</b>${bars(Object.entries(tp).map(([title,[s,m]])=>({title,pct:Math.round(100*s/Math.max(m,1))})))}</div>`:""}
  <div class="c" style="padding:8px 28px">${r.results.map(x=>`<details><summary><b>Q${x.position}</b>${x.verified===false?`<span class="chip">not verified</span>`:""}<span style="color:${x.score>=x.max?"inherit":"#B91C1C"}">${x.score}/${x.max}</span></summary><p>${esc(x.question)}</p><p class="m">Your answer: ${esc(x.response||"—")}</p>${x.feedback?`<p>${esc(x.feedback)}</p>`:""}${x.markedBy?`<span class="chip">${esc(x.markedBy==="ai"?"AI marked":"Algorithm marked")}</span>`:""}${x.errorType?`<span class="chip">${esc(x.errorType.replace("_"," "))}</span>`:""}<p><b>Model answer:</b> ${esc(x.answer)}</p><p class="m">${esc(x.explanation)}</p></details>`).join("")}</div>`};
-go(); // run only after every route (R.*) is defined
+enterApp().catch(e=>authScreen("login",e.message)); // run only after every route (R.*) is defined
 </script></body></html>

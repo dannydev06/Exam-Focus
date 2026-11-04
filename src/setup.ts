@@ -1,5 +1,5 @@
 import pdf from "pdf-parse/lib/pdf-parse.js";
-import { db, llmJson } from "./lib.js";
+import { assertCourseOwner, db, llmJson } from "./lib.js";
 import { buildStyleProfile } from "./style.js";
 import { ocr } from "./ocr.js";
 
@@ -10,23 +10,31 @@ export function setupRoutes(app: any, h: any, uid: (r: any) => string, upload: a
     const { code, title, department, level } = req.body;
     if (!code?.trim() || !title?.trim()) throw new Error("Course code and title are required.");
     try {
-      const [c] = await rows(`INSERT INTO courses (code, title, department, level) VALUES ($1,$2,$3,$4) RETURNING id`,
-        [code.trim(), title.trim(), department || null, level ? Number(level) : null]);
+      const [c] = await rows(`INSERT INTO courses (owner_id, code, title, department, level) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+        [uid(req), code.trim(), title.trim(), department || null, level ? Number(level) : null]);
       res.json(c);
-    } catch (e: any) { throw new Error(e.code === "23505" ? "That course code already exists." : e.message); }
+    } catch (e: any) { throw new Error(e.code === "23505" ? "You already have a course with that code." : e.message); }
   }));
 
   app.post("/lecturers", h(async (req: any, res: any) => {
     const name = req.body.name?.trim();
     if (!name) throw new Error("Lecturer name is required.");
-    res.json((await rows(`INSERT INTO lecturers (name) VALUES ($1) RETURNING id`, [name]))[0]);
+    try {
+      res.json((await rows(`INSERT INTO lecturers (owner_id,name) VALUES ($1,$2) RETURNING id`, [uid(req), name]))[0]);
+    } catch (e: any) {
+      if (e.code === "23505") throw new Error("You already have a lecturer with that name.");
+      throw e;
+    }
   }));
 
-  app.get("/courses/:id/topics", h(async (req: any, res: any) =>
-    res.json(await rows(`SELECT id, title FROM ccmas_topics WHERE course_id=$1 ORDER BY position, title`, [req.params.id]))));
+  app.get("/courses/:id/topics", h(async (req: any, res: any) => {
+    await assertCourseOwner(req.params.id, uid(req));
+    res.json(await rows(`SELECT id, title FROM ccmas_topics WHERE course_id=$1 ORDER BY position, title`, [req.params.id]));
+  }));
 
   // Suggest topics from pasted CCMAS text or an uploaded CCMAS page. Nothing is saved until the user confirms.
   app.post("/courses/:id/topics/extract", upload.single("file"), h(async (req: any, res: any) => {
+    await assertCourseOwner(req.params.id, uid(req));
     let text: string = req.body.text;
     if (req.file) { // text PDFs directly, scans and photos through OCR
       text = req.file.mimetype.includes("pdf") ? (await pdf(req.file.buffer)).text : "";
@@ -40,6 +48,7 @@ export function setupRoutes(app: any, h: any, uid: (r: any) => string, upload: a
   }));
 
   app.post("/courses/:id/topics", h(async (req: any, res: any) => {
+    await assertCourseOwner(req.params.id, uid(req));
     const list = [...new Set<string>((req.body.topics ?? []).map((t: any) => String(t).trim()).filter(Boolean))];
     for (const t of list) await db.query(
       `INSERT INTO ccmas_topics (course_id, title) SELECT $1::uuid, $2::text
@@ -58,6 +67,6 @@ export function setupRoutes(app: any, h: any, uid: (r: any) => string, upload: a
   app.get("/weak-topics", h(async (req: any, res: any) => res.json(await rows(
     `SELECT t.id, t.title, round(100*sum(aa.score)/greatest(sum(eq.marks),1))::int pct
      FROM attempt_answers aa JOIN attempts a ON a.id=aa.attempt_id JOIN exam_questions eq ON eq.id=aa.exam_question_id
-     JOIN exams e ON e.id=a.exam_id JOIN ccmas_topics t ON t.id=eq.topic_id
-     WHERE a.user_id=$1 AND e.course_id=$2 GROUP BY t.id, t.title ORDER BY pct ASC LIMIT 3`, [uid(req), req.query.courseId]))));
+     JOIN exams e ON e.id=a.exam_id JOIN courses c ON c.id=e.course_id JOIN ccmas_topics t ON t.id=eq.topic_id
+     WHERE a.user_id=$1 AND e.course_id=$2 AND c.owner_id=$1 GROUP BY t.id, t.title ORDER BY pct ASC LIMIT 3`, [uid(req), req.query.courseId]))));
 }
