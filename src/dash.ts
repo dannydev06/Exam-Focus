@@ -1,4 +1,5 @@
 import { db } from "./lib.js";
+import { readiness } from "../engine.mjs";
 
 export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
   const rows = async (sql: string, p: any[]) => (await db.query(sql, p)).rows;
@@ -8,7 +9,7 @@ export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
      FROM attempts a JOIN exams e ON e.id=a.exam_id
      WHERE a.user_id=$1 AND e.course_id=$2 AND a.submitted_at IS NOT NULL ORDER BY a.submitted_at DESC LIMIT 50`, [u, courseId]);
 
-  // Readiness = average % of the last 5 attempts. Topic % = share of past papers containing that topic.
+  // Topic readiness uses the engine's recency-aware mastery score.
   app.get("/dashboard", h(async (req: any, res: any) => {
     const { courseId } = req.query, lec = req.query.lecturerId || null, u = uid(req);
     const [p] = await rows(`SELECT count(distinct document_id)::int n FROM pq_questions WHERE course_id=$1 AND ($2::uuid IS NULL OR lecturer_id=$2::uuid)`, [courseId, lec]);
@@ -16,14 +17,31 @@ export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
       `SELECT t.title, round(100.0*count(distinct q.document_id)/greatest(1,$3::int))::int pct
        FROM ccmas_topics t JOIN pq_questions q ON q.topic_id=t.id AND ($2::uuid IS NULL OR q.lecturer_id=$2::uuid)
        WHERE t.course_id=$1 GROUP BY t.title ORDER BY pct DESC LIMIT 6`, [courseId, lec, p.n]);
-    const recent = await attempts(u, courseId), last5 = recent.slice(0, 5);
+    const recent = await attempts(u, courseId);
+    const masteryRows = await rows(
+      `SELECT t.id AS topic_id, t.title, t.weight,
+              coalesce(sum(aa.score),0)::float AS earned,
+              coalesce(sum(CASE WHEN aa.id IS NOT NULL THEN eq.marks ELSE 0 END),0)::float AS possible,
+              max(a.submitted_at) AS last_seen
+       FROM ccmas_topics t
+       LEFT JOIN exam_questions eq ON eq.topic_id=t.id
+       LEFT JOIN attempts a ON a.exam_id=eq.exam_id AND a.user_id=$2 AND a.submitted_at IS NOT NULL
+       LEFT JOIN attempt_answers aa ON aa.attempt_id=a.id AND aa.exam_question_id=eq.id
+       WHERE t.course_id=$1
+       GROUP BY t.id ORDER BY t.position, t.title`, [courseId, u]);
+    const mastery = readiness(masteryRows.map((t: any) => ({
+      ...t,
+      weight: t.weight == null ? 1 : Number(t.weight),
+      earned: Number(t.earned) || 0,
+      possible: Number(t.possible) || 0,
+    })));
     const [src] = await rows(`SELECT count(*)::int n FROM documents WHERE user_id=$1 AND course_id=$2 AND status='ready'`, [u, courseId]);
     const [weak] = await rows(
       `SELECT t.title FROM attempt_answers aa JOIN attempts a ON a.id=aa.attempt_id
        JOIN exam_questions eq ON eq.id=aa.exam_question_id JOIN exams e ON e.id=a.exam_id JOIN ccmas_topics t ON t.id=eq.topic_id
        WHERE a.user_id=$1 AND e.course_id=$2 GROUP BY t.title ORDER BY sum(aa.score)/greatest(sum(eq.marks),1) ASC LIMIT 1`, [u, courseId]);
     res.json({
-      readiness: last5.length ? Math.round(last5.reduce((s, r) => s + r.pct, 0) / last5.length) : null,
+      readiness: masteryRows.length ? mastery.score : null,
       topics, recent: recent.slice(0, 3), sources: src.n, weak: weak?.title ?? null,
     });
   }));

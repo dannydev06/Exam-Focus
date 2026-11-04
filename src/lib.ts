@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ override: true }); // values in .env win over leftover shell variables like PGPASSWORD
 import pg from "pg";
+import { createHash } from "node:crypto";
 
 export const db = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 db.query("SELECT 1").then(
@@ -23,6 +24,50 @@ export function normOptions(o: any): string[] | null {
   return null;
 }
 const sleep = (ms: number) => new Promise((s) => setTimeout(s, ms));
+let aiCacheReady: Promise<boolean> | undefined;
+
+async function ensureAICache(): Promise<boolean> {
+  if (!aiCacheReady) {
+    aiCacheReady = db.query(`CREATE TABLE IF NOT EXISTS ai_cache (
+      key text PRIMARY KEY,
+      kind text NOT NULL,
+      payload jsonb NOT NULL,
+      hits int NOT NULL DEFAULT 0,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`).then(() => true).catch((e: Error) => {
+      console.warn("AI response cache unavailable; continuing without cache:", e.message);
+      return false;
+    });
+  }
+  return aiCacheReady;
+}
+
+function cacheKey(kind: string, value: unknown): string {
+  return createHash("sha256").update(`${kind}\n${JSON.stringify(value)}`).digest("hex");
+}
+
+async function getCached<T>(key: string): Promise<T | undefined> {
+  if (!await ensureAICache()) return undefined;
+  try {
+    const { rows: [row] } = await db.query(`UPDATE ai_cache SET hits=hits+1 WHERE key=$1 RETURNING payload`, [key]);
+    return row?.payload as T | undefined;
+  } catch (e) {
+    console.warn("AI response cache read failed:", e instanceof Error ? e.message : String(e));
+    return undefined;
+  }
+}
+
+async function setCached(key: string, kind: string, value: unknown): Promise<void> {
+  if (!await ensureAICache()) return;
+  try {
+    await db.query(
+      `INSERT INTO ai_cache (key, kind, payload) VALUES ($1,$2,$3::jsonb)
+       ON CONFLICT (key) DO NOTHING`,
+      [key, kind, JSON.stringify(value)]);
+  } catch (e) {
+    console.warn("AI response cache write failed:", e instanceof Error ? e.message : String(e));
+  }
+}
 
 // fetch with retries on rate limits, server errors and dropped connections. retries = 0 fails immediately.
 async function call(fn: () => Promise<Response>, retries = 5): Promise<any> {
@@ -59,6 +104,20 @@ const OAI_EMB: Record<string, [string, string, string, number]> = {
 
 // Returns JSON strings like "[0.1,0.2,...]" (stored as jsonb). Don't mix embedding providers within one database.
 export async function embed(texts: string[]): Promise<string[]> {
+  if (!texts.length) return [];
+  const model = EMB === "gemini" ? "gemini-embedding-001:768" : env.EMBED_MODEL ?? OAI_EMB[EMB]?.[2] ?? "";
+  const kind = `embedding:${EMB}:${model}`;
+  const keys = texts.map((text) => cacheKey(kind, text));
+  if (await ensureAICache()) {
+    try {
+      const { rows } = await db.query(`SELECT key, payload FROM ai_cache WHERE key=ANY($1::text[])`, [keys]);
+      const cached = new Map(rows.map((row) => [row.key, row.payload]));
+      if (keys.every((key) => Array.isArray(cached.get(key))))
+        return keys.map((key) => JSON.stringify(cached.get(key)));
+    } catch (e) {
+      console.warn("Embedding cache read failed:", e instanceof Error ? e.message : String(e));
+    }
+  }
   const out: string[] = [];
   const size = EMB === "gemini" ? 100 : OAI_EMB[EMB]?.[3] ?? 32;
   for (let i = 0; i < texts.length; i += size) {
@@ -83,6 +142,7 @@ export async function embed(texts: string[]): Promise<string[]> {
       vecs = j.data.map((d: any) => d.embedding);
     }
     out.push(...vecs.map((v) => `[${v.join(",")}]`));
+    await Promise.all(vecs.map((v, j) => setCached(keys[i + j], kind, v)));
   }
   return out;
 }
@@ -130,8 +190,12 @@ async function llmOnce(p: string, primary: boolean, system: string, user: string
 }
 
 export async function llmJson<T>(system: string, user: string): Promise<T> {
-  if (!CHAIN.length) throw new Error("No AI provider configured: set LLM_PROVIDER and its API key in .env.");
   system += "\nReturn ONLY valid JSON, no markdown fences, no commentary.";
+  const models = CHAIN.map((p) => [p, env.LLM_MODEL, env[p === "anthropic" ? "CLAUDE_MODEL" : `${p.toUpperCase()}_MODEL`] ?? null]);
+  const key = cacheKey("llm-json", { models, system, user });
+  const cached = await getCached<T>(key);
+  if (cached !== undefined) return cached;
+  if (!CHAIN.length) throw new Error("No AI provider configured: set LLM_PROVIDER and its API key in .env.");
   const errors: string[] = [];
   for (let i = 0; i < CHAIN.length; i++) {
     const p = CHAIN[i], last = i === CHAIN.length - 1;
@@ -139,7 +203,9 @@ export async function llmJson<T>(system: string, user: string): Promise<T> {
       const text = await llmOnce(p, i === 0, system, user, last ? 3 : 0);
       if (!text.trim()) throw new Error("returned no text");
       const m = text.replace(/```json|```/g, "").match(/[\[{][\s\S]*[\]}]/);
-      return JSON.parse(m ? m[0] : text);
+      const value = JSON.parse(m ? m[0] : text) as T;
+      await setCached(key, "llm-json", value);
+      return value;
     } catch (e: any) {
       errors.push(`${p}: ${String(e.message).slice(0, 160)}`);
       if (!last) console.warn(`AI provider ${p} failed, trying ${CHAIN[i + 1]}: ${String(e.message).slice(0, 120)}`);

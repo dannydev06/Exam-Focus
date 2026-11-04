@@ -32,7 +32,9 @@ Submit:    MCQ marked in code, written answers marked by the LLM -> results + an
 ## Engineering decisions
 
 - **Provider-agnostic AI layer.** One `llmJson()` function supports Groq, Mistral, Cerebras, OpenRouter, Gemini and Anthropic. Providers are tried in order; a rate-limited one fails over instantly, and the last one retries with backoff that honours `Retry-After`.
+- **Lower-credit mode.** Exact repeated AI requests and embeddings are cached in Postgres. Low-credit mode is on by default, caps an exam at five questions and skips the separate AI answer-verification call; switch it off for longer exams with verification.
 - **Built for free-tier limits.** Questions are written in parallel batches, the answer check runs in the background so the exam opens sooner, topic embeddings are cached, and prompts are kept small.
+- **Shared rules engine.** Exam plans use the lecturer's question mix and a recency-weighted past-paper bank; source retrieval, deterministic answer checks, mistake labels and topic readiness use the same tested engine as `engine.test.mjs`. Written answers that need judgement still go to the AI marker.
 - **No vector-database dependency.** Embeddings live in plain Postgres `jsonb` and are compared in application code, so it runs on any Postgres install.
 - **Defensive handling of LLM output.** MCQ options, question types and topic ids are normalised before saving, because models return them in inconsistent shapes.
 - **Safe by default.** Parameterised SQL everywhere and HTML-escaped rendering in the frontend.

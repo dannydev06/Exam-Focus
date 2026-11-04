@@ -32,8 +32,8 @@ app.post("/documents", upload.array("file", 30), h(async (req, res) => {
 
 // Generate a mock exam
 app.post("/exams", h(async (req, res) => {
-  const { courseId, lecturerId, difficulty, count, focus } = req.body;
-  res.json(await generateExam({ userId: uid(req), courseId, lecturerId: lecturerId ?? null, difficulty, count, focus }));
+  const { courseId, lecturerId, difficulty, count, focus, lowCredit } = req.body;
+  res.json(await generateExam({ userId: uid(req), courseId, lecturerId: lecturerId ?? null, difficulty, count, focus, lowCredit: lowCredit === true }));
 }));
 
 // Fetch an exam (answers withheld until you build the submit flow)

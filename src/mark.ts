@@ -1,4 +1,5 @@
 import { db, llmJson, normOptions } from "./lib.js";
+import { classifyMistakes, markAnswer } from "../engine.mjs";
 
 type Ans = { examQuestionId: string; response?: string; timeSpent?: number };
 const letterOf = (s: string) => /^\(?([A-Da-d])(?:[).:]|$)/.exec(s.trim())?.[1]?.toUpperCase() ?? null;
@@ -16,17 +17,28 @@ export async function submitAttempt(userId: string, examId: string, answers: Ans
   const { rows: qs } = await db.query(`SELECT * FROM exam_questions WHERE exam_id=$1 ORDER BY position`, [examId]);
   if (!qs.length) throw new Error("Exam not found.");
   const given = new Map(answers.map((a) => [a.examQuestionId, a]));
-  const res = new Map<string, { score: number; feedback: string }>();
+  const res = new Map<string, { score: number; feedback: string; markedBy: "algorithm" | "ai" }>();
   const open: any[] = [];
 
   for (const q of qs) {
     const r = (given.get(q.id)?.response ?? "").trim();
     const max = Number(q.marks);
-    if (!r) res.set(q.id, { score: 0, feedback: "No answer given." });
-    else if (q.q_type === "mcq") {
-      const ok = letterOf(r) !== null && letterOf(r) === correctLetter(q);
-      res.set(q.id, { score: ok ? max : 0, feedback: ok ? "Correct." : "Incorrect." });
-    } else open.push({ id: q.id, question: q.text, model_answer: q.answer, max_marks: max, student_answer: r });
+    if (!r) res.set(q.id, { score: 0, feedback: "No answer given.", markedBy: "algorithm" });
+    else {
+      const result = markAnswer({
+        ...q,
+        answer: q.q_type === "mcq" ? correctLetter(q) : q.answer,
+      }, r);
+      if (!result.needsAI) {
+        res.set(q.id, {
+          score: result.score,
+          feedback: result.score > 0 ? "Key points matched." : "The answer did not match the key points.",
+          markedBy: "algorithm",
+        });
+      } else {
+        open.push({ id: q.id, question: q.text, model_answer: q.answer, max_marks: max, student_answer: r });
+      }
+    }
   }
 
   if (open.length) {
@@ -37,11 +49,27 @@ Return array of {"id","score","feedback"}.`,
       JSON.stringify(open));
     for (const g of graded) {
       const o = open.find((x) => x.id === g.id);
-      if (o) res.set(g.id, { score: Math.max(0, Math.min(o.max_marks, Number(g.score) || 0)), feedback: g.feedback });
+      if (o) res.set(g.id, {
+        score: Math.max(0, Math.min(o.max_marks, Number(g.score) || 0)),
+        feedback: g.feedback,
+        markedBy: "ai",
+      });
     }
-    for (const o of open) if (!res.has(o.id)) res.set(o.id, { score: 0, feedback: "Could not be marked automatically." });
+    for (const o of open) if (!res.has(o.id)) res.set(o.id, {
+      score: 0,
+      feedback: "Could not be marked automatically.",
+      markedBy: "ai",
+    });
   }
 
+  const mistakes = classifyMistakes(qs.map((q: any) => ({
+    position: q.position,
+    score: res.get(q.id)!.score,
+    max: Number(q.marks),
+    response: given.get(q.id)?.response,
+    time_spent_seconds: given.get(q.id)?.timeSpent,
+    q_type: q.q_type,
+  })));
   const total = qs.reduce((s, q) => s + Number(q.marks), 0);
   const score = [...res.values()].reduce((s, r) => s + r.score, 0);
   const { rows: [att] } = await db.query(
@@ -57,6 +85,7 @@ Return array of {"id","score","feedback"}.`,
     results: qs.map((q) => ({
       position: q.position, max: Number(q.marks), response: given.get(q.id)?.response ?? "",
       answer: q.answer, explanation: q.explanation, ...res.get(q.id)!,
+      errorType: mistakes.answers.find((a) => a.position === q.position)?.error_type ?? null,
     })),
   };
 }
