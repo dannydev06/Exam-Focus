@@ -45,6 +45,8 @@ const bars=(a)=>a.map(r=>`<div class="bar"><span>${esc(r.title)}</span><div clas
 const arow=(r)=>`<a class="row" href="#/results/${r.id}"><div><div>${esc(cn())}</div><div class="m sm">${dt(r.submitted_at)} · ${esc(r.difficulty)} · ${r.n} questions</div></div><b style="font-size:18px;color:${r.pct<60?"#B91C1C":"inherit"}">${r.pct}%</b></a>`;
 async function init(){if(!S.courses)[S.courses,S.lects]=await Promise.all([api("/courses"),api("/lecturers")]);if(!S.courses.find(c=>c.id===S.course))S.course=S.courses[0]?.id||""}
 function pick(k,v){S[k]=v;localStorage[k]=v;go()}
+const coursePicker=()=>`<label class="m">Course<select onchange="pick('course',this.value)">${S.courses.map(x=>`<option value="${x.id}" ${x.id===S.course?"selected":""}>${esc(x.code)} · ${esc(x.title)}</option>`).join("")}</select></label>`;
+const noCourses=()=>{A.innerHTML=`<div class="c"><h2>Add your first course</h2><p class="m">Each course keeps its topics, sources, exams, and progress separate.</p><a class="btn" href="#/courses">Set up a course</a></div>`};
 
 async function go(){const[,a,b]=(location.hash.slice(1)||"/").split("/");
  document.querySelectorAll(".tabs a").forEach(x=>x.classList.toggle("on",x.dataset.p===(a||"d")));
@@ -84,9 +86,10 @@ async function extractTopics(b){const fd=new FormData(),f=$("#tf").files[0];if(f
 async function saveTopics(b){const topics=$("#tl").value.split("\n").map(x=>x.trim()).filter(Boolean);if(!topics.length)return alert("Add at least one topic.");
  b.disabled=true;try{await post(`/courses/${S.course}/topics`,{topics});await R.courses()}catch(e){alert(e.message);b.disabled=false}}
 R.sources=async()=>{await init();
+ if(!S.courses.length){noCourses();return}
  const[p,src]=await Promise.all([api(`/pattern?courseId=${S.course}&lecturerId=${S.lect}`),api("/sources?courseId="+S.course)]);
  const tm=p?.profile?.typeMix||[],tot=tm.reduce((s,x)=>s+x.n,0)||1;
- A.innerHTML=`<div class="k">${esc(cn())}</div><h1>Your source library</h1>
+ A.innerHTML=`<div class="hd"><div><div class="k">${esc(cn())}</div><h1>Your source library</h1></div>${coursePicker()}</div>
  <div class="g2" style="margin-top:24px"><div><div class="c" style="margin-bottom:20px"><b>Upload a PDF or photos</b><div class="m sm">Scanned papers and phone photos are read automatically. Select all pages together, named in order.</div><div style="display:grid;gap:10px;margin:12px 0"><select id="k"><option value="past_question">Past questions</option><option value="note">Notes</option><option value="textbook">Textbook</option><option value="ccmas">CCMAS</option></select><input id="y" type="number" placeholder="Exam year (past questions)"><input id="f" type="file" multiple accept="application/pdf,image/*"></div><button class="btn w" onclick="up(this)">Upload</button></div>
  <div class="c" style="padding:8px 28px">${src.length?src.map(x=>`<div class="row" style="border-top:0;border-bottom:1px solid var(--bd)"><div><div>${esc(x.name)}</div><div class="m sm">${esc(x.kind.replace("_"," "))}${x.year?" · "+x.year:""}${x.lecturer?" · "+esc(x.lecturer):""}${x.needs_ocr?" · scanned (read with OCR)":""}</div></div><span style="display:flex;gap:8px;align-items:center"><span class="chip ${x.status==="ready"?"":"r"}">${x.status}</span><button class="btn o" style="padding:4px 10px" onclick="delSrc('${x.id}')">Delete</button></span></div>`).join(""):`<p class="m" style="padding:16px 0">No sources yet.</p>`}</div></div>
  <div class="c"><div class="k">Lecturer pattern</div>${p?`<h2>${Math.round(p.confidence*100)}% confidence</h2><div class="tr"><b style="width:${p.confidence*100}%"></b></div><p class="m sm">${p.sample_size} paper${p.sample_size==1?"":"s"} analysed${p.confidence<.6?" · upload more past papers":""}</p><div>${tm.map(x=>`<span class="chip">${esc(x.q_type)} ${Math.round(100*x.n/tot)}%</span>`).join("")}</div><div style="margin-top:8px">${(p.profile.commonVerbs||[]).map(v=>`<span class="chip r">${esc(v.command_verb)}</span>`).join("")}</div>`:`<p class="m">Upload past questions to learn how this lecturer sets exams.</p>`}</div></div>`};
@@ -96,8 +99,8 @@ async function up(b){const fs=[...$("#f").files];if(!fs.length)return alert("Cho
  b.disabled=true;b.textContent="Reading your file… scans can take a few minutes";
  try{await api("/documents",{method:"POST",body:fd});R.sources()}catch(e){alert(e.message);b.disabled=false;b.textContent="Upload"}}
 
-R.generate=async(mode)=>{await init();E.diff=E.diff||"medium";const weak=mode==="weak"?await api("/weak-topics?courseId="+S.course):[];E.focus=weak.length?weak.map(w=>w.id):null;
- A.innerHTML=`<div class="k">New mock exam</div><h1>Generate exam</h1><p class="m">${esc(cn())}${S.lect?" · "+esc(S.lects.find(l=>l.id===S.lect)?.name||""):""}</p>
+R.generate=async(mode)=>{await init();if(!S.courses.length){noCourses();return}E.diff=E.diff||"medium";const weak=mode==="weak"?await api("/weak-topics?courseId="+S.course):[];E.focus=weak.length?weak.map(w=>w.id):null;
+ A.innerHTML=`<div class="hd"><div><div class="k">New mock exam</div><h1>Generate exam</h1><p class="m">${esc(cn())}${S.lect?" · "+esc(S.lects.find(l=>l.id===S.lect)?.name||""):""}</p></div>${coursePicker()}</div>
  ${mode==="weak"?`<div class="c" style="margin-top:20px;padding:18px"><b>Practising your weakest topics</b>${weak.length?`<div style="margin-top:8px">${weak.map(w=>`<span class="chip r">${esc(w.title)} · ${w.pct}%</span>`).join("")}</div>`:`<p class="m sm">Finish an exam first so we can find your weak topics. A normal exam will be generated instead.</p>`}</div>`:""}
  <div class="g3" style="grid-template-columns:repeat(3,1fr);margin-top:24px">${[["easy","Recall and definitions, single step."],["medium","Application, two to three steps."],["hard","Analysis, multi-part and calculations."]].map(([k,t])=>`<div class="dc ${E.diff===k?"on":""}" data-k="${k}" onclick="E.diff='${k}';document.querySelectorAll('.dc').forEach(x=>x.classList.toggle('on',x.dataset.k==='${k}'))"><b style="text-transform:capitalize">${k}</b><p class="m sm">${t}</p></div>`).join("")}</div>
  <div class="c" style="margin-top:20px;display:flex;gap:16px;align-items:end;flex-wrap:wrap"><label style="flex:1;min-width:140px" class="m">Questions<input id="n" type="number" value="${localStorage.lowCredit==="0"?10:5}" min="3" max="${localStorage.lowCredit==="0"?30:5}"></label>
@@ -124,7 +127,8 @@ async function fin(force){const un=E.qs.filter(q=>!E.ans[q.id]).length;if(!force
  try{const r=await post(`/exams/${E.id}/submit`,{answers:E.qs.map(q=>({examQuestionId:q.id,response:E.ans[q.id]||"",timeSpent:Math.round((E.spent[q.id]||0)/1000)}))});clearInterval(E.iv);S.last=r;location.hash="#/results/"+r.attemptId}catch(e){alert(e.message)}}
 
 R.results=async(id)=>{await init();
- if(!id){const a=await api("/attempts?courseId="+S.course);A.innerHTML=`<div class="k">History</div><h1>Results</h1><div class="c" style="padding:8px 28px;margin-top:24px">${a.length?a.map(arow).join(""):`<p class="m" style="padding:16px 0">No attempts yet.</p>`}</div>`;return}
+ if(!S.courses.length){noCourses();return}
+ if(!id){const a=await api("/attempts?courseId="+S.course);A.innerHTML=`<div class="hd"><div><div class="k">History</div><h1>Results</h1></div>${coursePicker()}</div><div class="c" style="padding:8px 28px;margin-top:24px">${a.length?a.map(arow).join(""):`<p class="m" style="padding:16px 0">No attempts yet.</p>`}</div>`;return}
  const r=await api("/attempts/"+id);if(S.last?.attemptId===id)r.results.forEach(x=>{const live=S.last.results.find(y=>y.position===x.position);if(live)Object.assign(x,{feedback:live.feedback,errorType:live.errorType,markedBy:live.markedBy})});
  const pct=Math.round(100*r.score/Math.max(r.total,1)),tp={};r.results.forEach(x=>{if(x.topic){const t=tp[x.topic]??=[0,0];t[0]+=x.score;t[1]+=x.max}});
  A.innerHTML=`<a class="m" href="#/results" style="text-decoration:none">← All results</a>

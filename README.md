@@ -14,6 +14,7 @@ Upload past questions, lecture notes and the course syllabus. Exam Focus learns 
 - **Marking**: multiple-choice marked deterministically; written answers marked by an LLM against the model answer, with partial credit and saved feedback.
 - **Insights**: readiness score, topics tested most, results by topic, and weak-topic practice that builds an exam from the lowest-scoring topics.
 - **OCR for scans and photos**: scanned PDFs and phone photos of past papers are read locally with Tesseract (no API, no limits).
+- **Multiple courses**: add any course and switch between them while studying. Each course has its own topics, source library, exams, and progress; MBBS 214 is only the sample course.
 - **Course setup**: add courses and lecturers in the app, and extract a topic list from pasted CCMAS course content (reviewed before saving).
 
 ## How it works
@@ -56,7 +57,7 @@ psql -U postgres -d pqprep -f seed.sql      # prints your demo user id
 npm run dev                 # http://localhost:3000
 ```
 
-Open the app, paste the user id when asked, then upload the PDFs in `sample-data/` (the two past papers as "Past questions" with years 2023 and 2024, and the lecture notes as "Notes") and generate an exam.
+Open the app, paste the user id when asked, then select or add any course on the Courses page. For the demo course, upload the PDFs in `sample-data/` (the two past papers as "Past questions" with years 2023 and 2024, and the lecture notes as "Notes") and generate an exam.
 
 Free API keys are enough to try it: see `.env.example` for the providers supported.
 
