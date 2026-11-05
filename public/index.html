@@ -9,12 +9,12 @@ nav{background:var(--card);border-bottom:1px solid var(--bd);min-height:66px;dis
 .lg{width:32px;height:32px;border:1px solid var(--bd);border-radius:10px;display:grid;place-items:center;background:var(--logo-bg)}
 .lg i{width:16px;height:16px;border-radius:50%;display:block;background:radial-gradient(#DC2626 28%,var(--logo-bg) 30% 52%,#DC2626 54% 74%,var(--logo-bg) 76%)}
 .tabs{display:flex;gap:4px}.tabs a{padding:10px 16px;border-radius:10px;color:var(--m);text-decoration:none;white-space:nowrap}.tabs a.on{background:var(--s);color:var(--f)}
-.btn{background:var(--r);color:#fff;border:0;border-radius:10px;padding:12px 18px;font:600 14px inherit;cursor:pointer;text-decoration:none;white-space:nowrap;display:inline-block;text-align:center}
-.btn:hover{background:var(--r2)}.btn:disabled{opacity:.5}.btn.o{background:var(--card);color:var(--f);border:1px solid var(--bd);font-weight:500}.btn.o:hover{background:var(--s)}.btn.w{width:100%}
+.btn{background:var(--r);color:#fff;border:0;border-radius:10px;padding:12px 18px;font:600 14px inherit;cursor:pointer;text-decoration:none;white-space:nowrap;display:inline-block;text-align:center;transition:background .16s ease,transform .16s ease,box-shadow .16s ease}
+.btn:hover{background:var(--r2);box-shadow:0 3px 10px #0002;transform:translateY(-1px)}.btn:active{transform:translateY(0)}.btn:disabled{opacity:.5;box-shadow:none;transform:none}.btn.o{background:var(--card);color:var(--f);border:1px solid var(--bd);font-weight:500}.btn.o:hover{background:var(--s)}.btn.w{width:100%}
 main{max-width:1040px;margin:0 auto;padding:32px 16px 64px}
 .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);font-weight:600}
 h1{font-size:40px;line-height:1.1;letter-spacing:-.03em;margin:12px 0 8px;max-width:480px;text-wrap:balance}h2{font-size:22px;line-height:1.2;letter-spacing:-.02em;margin:12px 0 4px}
-.m{color:var(--m)}.sm{font-size:12px}.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:28px}
+.m{color:var(--m)}.sm{font-size:12px}.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:28px;box-shadow:0 1px 3px #00000008}
 .g2{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-bottom:20px}.g3{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 @media(max-width:800px){.g2,.g3{grid-template-columns:1fr!important}h1{font-size:32px}.tabs a{padding:8px 10px}nav>.btn{display:none}.bar{grid-template-columns:100px 1fr 36px}.sel label{min-width:0;flex:1}}
 select,input,textarea{font:inherit;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--field);color:var(--f);width:100%}
@@ -25,6 +25,9 @@ select,input,textarea{font:inherit;padding:10px 12px;border:1px solid var(--bd);
 .chip{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--s);font-size:12px;margin:2px;white-space:nowrap}.chip.r{background:var(--chip);color:var(--chip-text)}
 .dc{border:1px solid var(--bd);border-radius:12px;padding:20px;cursor:pointer;background:var(--card)}.dc.on{border-color:var(--r);box-shadow:0 0 0 1px var(--r)}
 .q{display:block;padding:12px 14px;border:1px solid var(--bd);border-radius:10px;margin:8px 0;cursor:pointer}.q.on{border-color:var(--r);background:var(--selected)}
+.tabs a{transition:background .15s ease,color .15s ease}.tabs a:hover{background:var(--s);color:var(--f)}
+.study-topic,.dc{transition:border-color .15s ease,background .15s ease,box-shadow .15s ease}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 .read-high{background:var(--highlight);border-radius:4px;padding:1px 2px}.read-medium{background:var(--highlight-mid);border-radius:4px;padding:1px 2px}.reader-text{font-size:16px;line-height:1.9;white-space:normal}.reader-text span{margin-right:.25em}.study-nav{display:grid;gap:8px;align-content:start}.study-topic{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px}.study-topic.on{border-color:var(--r);background:var(--selected)}.study-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
 @media(max-width:800px){.study-layout{grid-template-columns:1fr}}
 .nv{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.nv button{aspect-ratio:1;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--f);cursor:pointer;font:inherit}
@@ -95,9 +98,12 @@ function syncTheme(){const dark=isDark(),label=dark?"Light mode":"Dark mode";doc
 function toggleTheme(){const theme=isDark()?"light":"dark";document.documentElement.dataset.theme=theme;localStorage.setItem("theme",theme);syncTheme()}
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{if(!localStorage.getItem("theme"))syncTheme()});
 let installPrompt=null;
-addEventListener("beforeinstallprompt",ev=>{ev.preventDefault();installPrompt=ev;const b=$("#installApp");if(b)b.hidden=false});
-addEventListener("appinstalled",()=>{installPrompt=null;const b=$("#installApp");if(b)b.hidden=true});
-async function installApp(){if(installPrompt){await installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;return}
+function installedApp(){return navigator.standalone===true||matchMedia("(display-mode: standalone)").matches||localStorage.getItem("examFocusInstalled")==="1"}
+function syncInstallButton(){const b=$("#installApp");if(b)b.hidden=installedApp()}
+syncInstallButton();
+addEventListener("beforeinstallprompt",ev=>{ev.preventDefault();installPrompt=ev;syncInstallButton()});
+addEventListener("appinstalled",()=>{installPrompt=null;localStorage.setItem("examFocusInstalled","1");syncInstallButton()});
+async function installApp(){if(installedApp()){syncInstallButton();return}if(installPrompt){await installPrompt.prompt();const choice=await installPrompt.userChoice;installPrompt=null;if(choice.outcome==="accepted"){localStorage.setItem("examFocusInstalled","1");syncInstallButton()}return}
  alert(/iphone|ipad|ipod/i.test(navigator.userAgent)?"To install Exam Focus, tap Share in Safari, then choose “Add to Home Screen”.":"To install Exam Focus, open your browser menu and choose “Install app” or “Add to Home screen”.")}
 if("serviceWorker" in navigator&&location.protocol!=="file:")addEventListener("load",()=>navigator.serviceWorker.register("/service-worker.js").catch(e=>console.warn("App offline setup failed:",e)));
 function authScreen(mode,message=""){A.innerHTML=`<div class="c" style="max-width:440px;margin:9vh auto"><div style="display:flex;justify-content:space-between;align-items:center"><div class="k">Exam Focus account</div><button class="btn o" id="themeToggle" onclick="toggleTheme()"></button></div><h1 style="font-size:30px">${mode==="signup"?"Create your account":"Welcome back"}</h1><p class="m">${message?esc(message):"Sign in to keep your courses and study progress private."}</p><form id="authForm" style="display:grid;gap:12px;margin-top:20px">${mode==="signup"?`<label class="m">Your name<input name="name" autocomplete="name" required maxlength="80"></label>`:""}<label class="m">Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label class="m">Password<input name="password" type="password" autocomplete="${mode==="signup"?"new-password":"current-password"}" minlength="10" maxlength="128" required><span class="sm">At least 10 characters</span></label><button class="btn w" type="submit">${mode==="signup"?"Create account":"Sign in"}</button></form><button class="btn o w" style="margin-top:10px" onclick="authScreen('${mode==="signup"?"login":"signup"}')">${mode==="signup"?"Already have an account? Sign in":"New here? Create an account"}</button></div>`;syncTheme();
