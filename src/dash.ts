@@ -1,5 +1,5 @@
 import { assertCourseOwner, db } from "./lib.js";
-import { readiness } from "../engine.mjs";
+import { readiness, streak } from "../engine.mjs";
 
 export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
   const rows = async (sql: string, p: any[]) => (await db.query(sql, p)).rows;
@@ -41,9 +41,13 @@ export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
       `SELECT t.title FROM attempt_answers aa JOIN attempts a ON a.id=aa.attempt_id
        JOIN exam_questions eq ON eq.id=aa.exam_question_id JOIN exams e ON e.id=a.exam_id JOIN ccmas_topics t ON t.id=eq.topic_id
        WHERE a.user_id=$1 AND e.course_id=$2 GROUP BY t.title ORDER BY sum(aa.score)/greatest(sum(eq.marks),1) ASC LIMIT 1`, [u, courseId]);
+    const studyDays = await rows(
+      `SELECT DISTINCT a.submitted_at::date AS day FROM attempts a JOIN exams e ON e.id=a.exam_id
+       WHERE a.user_id=$1 AND e.course_id=$2 AND a.submitted_at IS NOT NULL`, [u, courseId]);
     res.json({
       readiness: masteryRows.length ? mastery.score : null,
       topics, recent: recent.slice(0, 3), sources: src.n, weak: weak?.title ?? null,
+      streak: streak(studyDays.map((row: any) => row.day)),
     });
   }));
 

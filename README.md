@@ -13,6 +13,7 @@ Upload past questions, lecture notes and the course syllabus. Exam Focus learns 
 - **Exam mode**: countdown timer, question navigator, flagging, auto-submit when time runs out.
 - **Marking**: multiple-choice marked deterministically; written answers marked by an LLM against the model answer, with partial credit and saved feedback.
 - **Insights**: readiness score, topics tested most, results by topic, and weak-topic practice that builds an exam from the lowest-scoring topics.
+- **Practice streak**: see consecutive days with completed exams and your longest streak on the dashboard.
 - **OCR for scans and photos**: scanned PDFs and phone photos of past papers are read locally with Tesseract (no API, no limits).
 - **Multiple courses**: add any course and switch between them while studying. Each course has its own topics, source library, exams, and progress; MBBS 214 is only the sample course.
 - **Private accounts**: students can sign up with an email and password. Courses, lecturers, uploads, exams, and results are scoped to the signed-in account; another account cannot access them.
