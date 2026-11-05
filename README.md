@@ -15,6 +15,7 @@ Upload past questions, lecture notes and the course syllabus. Exam Focus learns 
 - **Insights**: readiness score, topics tested most, results by topic, and weak-topic practice that builds an exam from the lowest-scoring topics.
 - **Practice streak**: see consecutive days with completed exams and your longest streak on the dashboard.
 - **Guided reading**: see past-paper answering tips, high-yield passages, and key-point summaries from your own notes; track reading progress and save personal notes without using AI requests.
+- **Dark mode**: follows your device preference by default, with a saved in-app toggle.
 - **OCR for scans and photos**: scanned PDFs and phone photos of past papers are read locally with Tesseract (no API, no limits).
 - **Multiple courses**: add any course and switch between them while studying. Each course has its own topics, source library, exams, and progress; MBBS 214 is only the sample course.
 - **Private accounts**: students can sign up with an email and password. Courses, lecturers, uploads, exams, and results are scoped to the signed-in account; another account cannot access them.

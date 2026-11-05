@@ -1,31 +1,33 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#DC2626"><meta name="description" content="Practice for exams with mock tests based on your course materials and lecturer's past questions."><link rel="manifest" href="/app.webmanifest"><link rel="icon" href="/icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><title>Exam Focus</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#DC2626"><meta name="description" content="Practice for exams with mock tests based on your course materials and lecturer's past questions."><link rel="manifest" href="/app.webmanifest"><link rel="icon" href="/icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><script>try{const t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch{}</script><title>Exam Focus</title>
 <style>
-:root{--r:#DC2626;--r2:#B91C1C;--bd:#E4E4E7;--m:#71717A;--f:#18181B;--bg:#FAFAFA;--s:#F4F4F5}
+:root{color-scheme:light;--r:#DC2626;--r2:#B91C1C;--bd:#E4E4E7;--m:#71717A;--f:#18181B;--bg:#FAFAFA;--s:#F4F4F5;--card:#fff;--field:#fff;--selected:#FEF2F2;--chip:#FEE2E2;--chip-text:#B91C1C;--highlight:#FEF2F2;--highlight-mid:#FEF9C3;--logo-bg:#FFF7F7}
+:root[data-theme="dark"]{color-scheme:dark;--bd:#3F3F46;--m:#A1A1AA;--f:#FAFAFA;--bg:#18181B;--s:#27272A;--card:#27272A;--field:#18181B;--selected:#3B2022;--chip:#3B2022;--chip-text:#FCA5A5;--highlight:#54272A;--highlight-mid:#51451E;--logo-bg:#3B2022}
+@media(prefers-color-scheme:dark){:root:not([data-theme]){color-scheme:dark;--bd:#3F3F46;--m:#A1A1AA;--f:#FAFAFA;--bg:#18181B;--s:#27272A;--card:#27272A;--field:#18181B;--selected:#3B2022;--chip:#3B2022;--chip-text:#FCA5A5;--highlight:#54272A;--highlight-mid:#51451E;--logo-bg:#3B2022}}
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;font:14px/1.5 Inter,system-ui,sans-serif;background:var(--bg);color:var(--f)}
-nav{background:#fff;border-bottom:1px solid var(--bd);min-height:66px;display:flex;align-items:center;justify-content:space-between;padding:10px max(16px,calc((100% - 1160px)/2));gap:16px;flex-wrap:wrap}
+nav{background:var(--card);border-bottom:1px solid var(--bd);min-height:66px;display:flex;align-items:center;justify-content:space-between;padding:10px max(16px,calc((100% - 1160px)/2));gap:16px;flex-wrap:wrap}
 .logo{display:flex;gap:12px;align-items:center;font-weight:600;white-space:nowrap;text-decoration:none;color:inherit}
-.lg{width:32px;height:32px;border:1px solid var(--bd);border-radius:10px;display:grid;place-items:center;background:#FFF7F7}
-.lg i{width:16px;height:16px;border-radius:50%;display:block;background:radial-gradient(#DC2626 28%,#FFF7F7 30% 52%,#DC2626 54% 74%,#FFF7F7 76%)}
+.lg{width:32px;height:32px;border:1px solid var(--bd);border-radius:10px;display:grid;place-items:center;background:var(--logo-bg)}
+.lg i{width:16px;height:16px;border-radius:50%;display:block;background:radial-gradient(#DC2626 28%,var(--logo-bg) 30% 52%,#DC2626 54% 74%,var(--logo-bg) 76%)}
 .tabs{display:flex;gap:4px}.tabs a{padding:10px 16px;border-radius:10px;color:var(--m);text-decoration:none;white-space:nowrap}.tabs a.on{background:var(--s);color:var(--f)}
 .btn{background:var(--r);color:#fff;border:0;border-radius:10px;padding:12px 18px;font:600 14px inherit;cursor:pointer;text-decoration:none;white-space:nowrap;display:inline-block;text-align:center}
-.btn:hover{background:var(--r2)}.btn:disabled{opacity:.5}.btn.o{background:#fff;color:var(--f);border:1px solid var(--bd);font-weight:500}.btn.o:hover{background:var(--s)}.btn.w{width:100%}
+.btn:hover{background:var(--r2)}.btn:disabled{opacity:.5}.btn.o{background:var(--card);color:var(--f);border:1px solid var(--bd);font-weight:500}.btn.o:hover{background:var(--s)}.btn.w{width:100%}
 main{max-width:1040px;margin:0 auto;padding:32px 16px 64px}
 .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);font-weight:600}
 h1{font-size:40px;line-height:1.1;letter-spacing:-.03em;margin:12px 0 8px;max-width:480px;text-wrap:balance}h2{font-size:22px;line-height:1.2;letter-spacing:-.02em;margin:12px 0 4px}
-.m{color:var(--m)}.sm{font-size:12px}.c{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:28px}
+.m{color:var(--m)}.sm{font-size:12px}.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:28px}
 .g2{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-bottom:20px}.g3{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 @media(max-width:800px){.g2,.g3{grid-template-columns:1fr!important}h1{font-size:32px}.tabs a{padding:8px 10px}nav>.btn{display:none}.bar{grid-template-columns:100px 1fr 36px}.sel label{min-width:0;flex:1}}
-select,input,textarea{font:inherit;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:#fff;width:100%}
+select,input,textarea{font:inherit;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--field);color:var(--f);width:100%}
 .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:28px}.sel{display:flex;gap:12px}.sel label{font-size:12px;min-width:140px}
 .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--bd);border-radius:99px;padding:5px 12px;white-space:nowrap}.pill:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--r)}
 .row{display:flex;align-items:center;gap:16px;justify-content:space-between;padding:14px 0;border-top:1px solid var(--bd);text-decoration:none;color:inherit}
 .bar{display:grid;grid-template-columns:140px 1fr 40px;gap:12px;align-items:center;margin:10px 0;font-size:12px}.tr{height:6px;background:var(--s);border-radius:9px;overflow:hidden}.tr b{display:block;height:100%;background:var(--r);border-radius:9px}
-.chip{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--s);font-size:12px;margin:2px;white-space:nowrap}.chip.r{background:#FEE2E2;color:var(--r2)}
-.dc{border:1px solid var(--bd);border-radius:12px;padding:20px;cursor:pointer;background:#fff}.dc.on{border-color:var(--r);box-shadow:0 0 0 1px var(--r)}
-.q{display:block;padding:12px 14px;border:1px solid var(--bd);border-radius:10px;margin:8px 0;cursor:pointer}.q.on{border-color:var(--r);background:#FEF2F2}
-.read-high{background:#FEF2F2;border-radius:4px;padding:1px 2px}.read-medium{background:#FEF9C3;border-radius:4px;padding:1px 2px}.reader-text{font-size:16px;line-height:1.9;white-space:normal}.reader-text span{margin-right:.25em}.study-nav{display:grid;gap:8px;align-content:start}.study-topic{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:12px}.study-topic.on{border-color:var(--r);background:#FEF2F2}.study-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--s);font-size:12px;margin:2px;white-space:nowrap}.chip.r{background:var(--chip);color:var(--chip-text)}
+.dc{border:1px solid var(--bd);border-radius:12px;padding:20px;cursor:pointer;background:var(--card)}.dc.on{border-color:var(--r);box-shadow:0 0 0 1px var(--r)}
+.q{display:block;padding:12px 14px;border:1px solid var(--bd);border-radius:10px;margin:8px 0;cursor:pointer}.q.on{border-color:var(--r);background:var(--selected)}
+.read-high{background:var(--highlight);border-radius:4px;padding:1px 2px}.read-medium{background:var(--highlight-mid);border-radius:4px;padding:1px 2px}.reader-text{font-size:16px;line-height:1.9;white-space:normal}.reader-text span{margin-right:.25em}.study-nav{display:grid;gap:8px;align-content:start}.study-topic{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px}.study-topic.on{border-color:var(--r);background:var(--selected)}.study-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
 @media(max-width:800px){.study-layout{grid-template-columns:1fr}}
-.nv{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.nv button{aspect-ratio:1;border:1px solid var(--bd);border-radius:8px;background:#fff;cursor:pointer;font:inherit}
+.nv{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.nv button{aspect-ratio:1;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--f);cursor:pointer;font:inherit}
 .nv .d{background:#52525B;color:#fff}.nv .fl{border-color:var(--r);color:var(--r)}.nv .cur{background:var(--r);color:#fff;border-color:var(--r)}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:12px}
 button,a,select,input,textarea{-webkit-tap-highlight-color:transparent}
@@ -73,10 +75,14 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
  .bar{grid-template-columns:minmax(64px,28%) minmax(36px,1fr) 34px;font-size:11px}
  .nv{gap:5px}
 }
+:root[data-theme="dark"] [style*="background:#fff"],:root[data-theme="dark"] [style*="background: #fff"]{background:var(--card)!important}
+@media(prefers-color-scheme:dark){:root:not([data-theme]) [style*="background:#fff"],:root:not([data-theme]) [style*="background: #fff"]{background:var(--card)!important}}
+svg circle:first-child{stroke:var(--bd)}
+svg text:last-of-type{fill:var(--m)}
 </style></head><body>
 <nav hidden><a class="logo" href="#/"><span class="lg"><i></i></span>Exam Focus</a>
 <div class="tabs"><a data-p="d" href="#/">Dashboard</a><a data-p="study" href="#/study">Study</a><a data-p="generate" href="#/generate">Generate</a><a data-p="sources" href="#/sources">Sources</a><a data-p="courses" href="#/courses">Courses</a><a data-p="results" href="#/results">Results</a></div>
-<div style="display:flex;align-items:center;gap:12px"><a class="btn" href="#/generate">+ Generate exam</a><span id="who" class="m sm"></span><button class="btn o" id="installApp" onclick="installApp()">Install</button><button class="btn o" onclick="signOut()">Sign out</button></div></nav>
+<div style="display:flex;align-items:center;gap:12px"><a class="btn" href="#/generate">+ Generate exam</a><span id="who" class="m sm"></span><button class="btn o" id="themeToggle" onclick="toggleTheme()"></button><button class="btn o" id="installApp" onclick="installApp()">Install</button><button class="btn o" onclick="signOut()">Sign out</button></div></nav>
 <main id="app"></main>
 <script>
 const $=(s)=>document.querySelector(s),A=$("#app");
@@ -84,16 +90,20 @@ const esc=(s)=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"
 const api=async(p,o={})=>{const r=await fetch(p,{credentials:"same-origin",...o,headers:{...(o.headers||{})}});const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j};
 const post=(p,b)=>api(p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
 const S={course:localStorage.course||"",lect:localStorage.lect||""},E={},R={};
+function isDark(){return document.documentElement.dataset.theme==="dark"||(!document.documentElement.dataset.theme&&matchMedia("(prefers-color-scheme: dark)").matches)}
+function syncTheme(){const dark=isDark(),label=dark?"Light mode":"Dark mode";document.querySelectorAll("#themeToggle").forEach(b=>{b.textContent=label;b.setAttribute("aria-label",`Switch to ${label.toLowerCase()}`);b.setAttribute("aria-pressed",String(dark))});const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=dark?"#18181B":"#DC2626"}
+function toggleTheme(){const theme=isDark()?"light":"dark";document.documentElement.dataset.theme=theme;localStorage.setItem("theme",theme);syncTheme()}
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{if(!localStorage.getItem("theme"))syncTheme()});
 let installPrompt=null;
 addEventListener("beforeinstallprompt",ev=>{ev.preventDefault();installPrompt=ev;const b=$("#installApp");if(b)b.hidden=false});
 addEventListener("appinstalled",()=>{installPrompt=null;const b=$("#installApp");if(b)b.hidden=true});
 async function installApp(){if(installPrompt){await installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;return}
  alert(/iphone|ipad|ipod/i.test(navigator.userAgent)?"To install Exam Focus, tap Share in Safari, then choose “Add to Home Screen”.":"To install Exam Focus, open your browser menu and choose “Install app” or “Add to Home screen”.")}
 if("serviceWorker" in navigator&&location.protocol!=="file:")addEventListener("load",()=>navigator.serviceWorker.register("/service-worker.js").catch(e=>console.warn("App offline setup failed:",e)));
-function authScreen(mode,message=""){A.innerHTML=`<div class="c" style="max-width:440px;margin:9vh auto"><div class="k">Exam Focus account</div><h1 style="font-size:30px">${mode==="signup"?"Create your account":"Welcome back"}</h1><p class="m">${message?esc(message):"Sign in to keep your courses and study progress private."}</p><form id="authForm" style="display:grid;gap:12px;margin-top:20px">${mode==="signup"?`<label class="m">Your name<input name="name" autocomplete="name" required maxlength="80"></label>`:""}<label class="m">Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label class="m">Password<input name="password" type="password" autocomplete="${mode==="signup"?"new-password":"current-password"}" minlength="10" maxlength="128" required><span class="sm">At least 10 characters</span></label><button class="btn w" type="submit">${mode==="signup"?"Create account":"Sign in"}</button></form><button class="btn o w" style="margin-top:10px" onclick="authScreen('${mode==="signup"?"login":"signup"}')">${mode==="signup"?"Already have an account? Sign in":"New here? Create an account"}</button></div>`;
+function authScreen(mode,message=""){A.innerHTML=`<div class="c" style="max-width:440px;margin:9vh auto"><div style="display:flex;justify-content:space-between;align-items:center"><div class="k">Exam Focus account</div><button class="btn o" id="themeToggle" onclick="toggleTheme()"></button></div><h1 style="font-size:30px">${mode==="signup"?"Create your account":"Welcome back"}</h1><p class="m">${message?esc(message):"Sign in to keep your courses and study progress private."}</p><form id="authForm" style="display:grid;gap:12px;margin-top:20px">${mode==="signup"?`<label class="m">Your name<input name="name" autocomplete="name" required maxlength="80"></label>`:""}<label class="m">Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label class="m">Password<input name="password" type="password" autocomplete="${mode==="signup"?"new-password":"current-password"}" minlength="10" maxlength="128" required><span class="sm">At least 10 characters</span></label><button class="btn w" type="submit">${mode==="signup"?"Create account":"Sign in"}</button></form><button class="btn o w" style="margin-top:10px" onclick="authScreen('${mode==="signup"?"login":"signup"}')">${mode==="signup"?"Already have an account? Sign in":"New here? Create an account"}</button></div>`;syncTheme();
  $("#authForm").onsubmit=async ev=>{ev.preventDefault();const button=ev.currentTarget.querySelector("button[type=submit]"),values=Object.fromEntries(new FormData(ev.currentTarget));button.disabled=true;button.textContent="Please wait…";try{await post(`/auth/${mode}`,values);await enterApp()}catch(e){authScreen(mode,e.message)}};
 }
-async function enterApp(){const user=await api("/auth/me");$("#who").textContent=user.name;document.querySelector("nav").hidden=false;await go()}
+async function enterApp(){const user=await api("/auth/me");$("#who").textContent=user.name;document.querySelector("nav").hidden=false;syncTheme();await go()}
 async function signOut(){try{await post("/auth/logout",{});document.querySelector("nav").hidden=true;authScreen("login","You are signed out.")}catch(e){alert(e.message)}}
 const L=(i)=>String.fromCharCode(65+i),dt=(d)=>new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
 const cn=()=>S.courses?.find(c=>c.id===S.course)?.title||"";
