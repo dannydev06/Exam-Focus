@@ -14,6 +14,7 @@ Upload past questions, lecture notes and the course syllabus. Exam Focus learns 
 - **Marking**: multiple-choice marked deterministically; written answers marked by an LLM against the model answer, with partial credit and saved feedback.
 - **Insights**: readiness score, topics tested most, results by topic, and weak-topic practice that builds an exam from the lowest-scoring topics.
 - **Practice streak**: see consecutive days with completed exams and your longest streak on the dashboard.
+- **Guided reading**: see past-paper answering tips, high-yield passages, and key-point summaries from your own notes; track reading progress and save personal notes without using AI requests.
 - **OCR for scans and photos**: scanned PDFs and phone photos of past papers are read locally with Tesseract (no API, no limits).
 - **Multiple courses**: add any course and switch between them while studying. Each course has its own topics, source library, exams, and progress; MBBS 214 is only the sample course.
 - **Private accounts**: students can sign up with an email and password. Courses, lecturers, uploads, exams, and results are scoped to the signed-in account; another account cannot access them.
@@ -48,6 +49,10 @@ Submit:    MCQ marked in code, written answers marked by the LLM -> results + an
 
 Node.js, TypeScript, Express, PostgreSQL, vanilla JavaScript single-page frontend (hash router), `pdf-parse`, LLM and embedding APIs over plain `fetch`.
 
+## Install on a phone or computer
+
+Exam Focus is an installable Progressive Web App. Deploy it over HTTPS, open the site in a supported browser, and choose **Install** in the app or the browser's **Add to Home Screen / Install app** option. On iPhone or iPad, open the site in Safari, tap **Share**, then **Add to Home Screen**. The app shell can open offline, but signing in, loading course data, and saving progress require a connection. Private API responses are never cached offline.
+
 ## Run it locally
 
 Requires Node 20+ and PostgreSQL 14+.
@@ -62,6 +67,8 @@ npm run dev                 # http://localhost:3000
 ```
 
 Open the app and create an account or sign in. The first run applies the account/session and course-ownership migration to the existing database. Existing course ownership is inferred from its source and exam records; if a course has records from multiple users, startup stops rather than expose them across accounts. Add a course on the Courses page, then upload your own past questions and notes. For the demo course, upload the PDFs in `sample-data/` (the two past papers as "Past questions" with years 2023 and 2024, and the lecture notes as "Notes") and generate an exam.
+
+The app also creates the reading-progress, personal-note, and study-day tables at startup. Run `schema_v2.sql` and `schema_v3.sql` after the base schema to install the remaining optional study features and reading-coverage view.
 
 Each account has a private copy of its courses and study data; this version does not yet support shared class workspaces. Use HTTPS when hosting publicly so session cookies are protected. Email verification and password-reset emails are not configured yet, so users should use an email address they can access and remember their password. Daily AI allowances reset at 00:00 UTC; they govern uncached provider requests, not exact provider charges.
 

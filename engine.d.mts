@@ -50,3 +50,20 @@ export function readiness<T extends {
   possible?: number;
   last_seen?: Date | string | null;
 }>(topics: T[]): { score: number; label: string; topics: (T & { mastery: number; status: string })[] };
+
+export function streak(days: (Date | string)[], today?: Date): { current: number; longest: number };
+
+export function examTerms(questions: { text?: string; marks?: number }[]): Map<string, number>;
+export function scoreSentences(text: string, options: { terms: Map<string, number> }): {
+  index: number; text: string; score: number; matched: string[]; kind: string | null; level: "high" | "medium" | null;
+}[];
+export function extractiveSummary(text: string, options: { terms: Map<string, number>; max?: number }): string[];
+export function howAsked(rows: {
+  document_id?: string; year?: number | null; command_verb?: string | null; marks?: number | null; q_type?: string | null;
+}[], options?: { papers?: number | null }): {
+  askedInPapers: number; ofPapers: number | null; verbs: { command_verb: string; n: number }[];
+  avgMarks: number | null; typicalType: string | null; years: number[]; guide: string | null;
+};
+export function readingQueue<T extends {
+  topic_id: string; title: string; share?: number; tier?: string; mastery?: number; readFraction?: number;
+}>(topics: T[]): (T & { priority: number; reason: string })[];

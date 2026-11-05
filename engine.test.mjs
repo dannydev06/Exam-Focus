@@ -169,3 +169,62 @@ test("gateway: cache hit skips AI, quota moves to next provider, fallback when a
   assert.equal((await down({ kind: "k", input: 1, prompt: "p", fallback: "basic" })).degraded, true);
   await assert.rejects(down({ kind: "k", input: 2, prompt: "p" }), /AI_UNAVAILABLE/);
 });
+
+test("reading: exam terms skip command words, highlights follow the lecturer", () => {
+  const pq = [
+    { text: "Explain the role of the juxtaglomerular apparatus in renin release.", marks: 10 },
+    { text: "Describe renin secretion and its control by the juxtaglomerular cells.", marks: 5 },
+    { text: "State two functions of the proximal tubule.", marks: 2 },
+  ];
+  const terms = E.examTerms(pq);
+  assert.ok(!terms.has(E.stem("explain")) && !terms.has(E.stem("describe")), "command verbs are not content");
+  assert.ok(terms.get(E.stem("renin")) > terms.get(E.stem("tubule")), "asked twice beats asked once");
+  const passage = "The weather in Lagos is warm in March. Renin is an enzyme released by the juxtaglomerular cells when renal perfusion pressure falls. " +
+    "Students often enjoy the practical sessions. The proximal tubule reabsorbs most of the filtered sodium and water.";
+  const s = E.scoreSentences(passage, { terms });
+  const by = (frag) => s.find((x) => x.text.includes(frag));
+  assert.equal(by("weather").level, null);
+  assert.equal(by("Renin is an enzyme").level, "high");
+  assert.equal(by("Renin is an enzyme").kind, "definition");
+  assert.ok(by("Renin is an enzyme").matched.length >= 2);
+});
+
+test("reading: summary is short, ordered and free of near-duplicates", () => {
+  const terms = E.examTerms([{ text: "Explain renin release from juxtaglomerular cells", marks: 10 }, { text: "Outline renin and angiotensin", marks: 5 }]);
+  const text = "Renin is released by juxtaglomerular cells when blood pressure falls. Renin is released by the juxtaglomerular cells when blood pressure falls sharply. " +
+    "Angiotensin is formed when renin acts on angiotensinogen in plasma. Lagos has many universities with large campuses.";
+  const sum = E.extractiveSummary(text, { terms, max: 3 });
+  assert.equal(sum.length, 2, "duplicate sentence and irrelevant sentence dropped");
+  assert.ok(sum[0].startsWith("Renin") && sum[1].startsWith("Angiotensin"), "kept in reading order");
+});
+
+test("reading: how a topic is asked, with an answer guide", () => {
+  const rows = [
+    { document_id: "p1", year: 2023, command_verb: "Explain", marks: 10, q_type: "theory" },
+    { document_id: "p2", year: 2024, command_verb: "explain", marks: 8, q_type: "theory" },
+    { document_id: "p3", year: 2024, command_verb: "State", marks: 2, q_type: "short_answer" },
+  ];
+  const h = E.howAsked(rows, { papers: 4 });
+  assert.equal(h.askedInPapers, 3); assert.equal(h.ofPapers, 4);
+  assert.equal(h.verbs[0].command_verb, "explain"); assert.equal(h.verbs[0].n, 2);
+  assert.equal(h.avgMarks, 6.7); assert.equal(h.typicalType, "theory");
+  assert.deepEqual(h.years, [2024, 2023]);
+  assert.match(h.guide, /mechanism/); assert.match(h.guide, /7 points/);
+  assert.match(E.answerGuide("define", 1), /One to two lines/);
+  assert.equal(E.howAsked([]).guide, null);
+});
+
+test("reading queue: high-yield + weak + unread first, finished topics drop out", () => {
+  const q = E.readingQueue([
+    { topic_id: "cardiac", share: 0.4, tier: "banker", mastery: 0.2, readFraction: 0 },
+    { topic_id: "renal", share: 0.3, tier: "banker", mastery: 0.8, readFraction: 0 },
+    { topic_id: "resp", share: 0.05, tier: "low", mastery: 0.1, readFraction: 0 },
+    { topic_id: "neuro", share: 0.25, tier: "likely", mastery: 0.3, readFraction: 0.5 },
+    { topic_id: "endo", share: 0.5, tier: "banker", mastery: 0.1, readFraction: 1 },
+  ]);
+  assert.equal(q[0].topic_id, "cardiac"); assert.equal(q[0].reason, "high-yield and weak");
+  assert.ok(!q.some((t) => t.topic_id === "endo"));
+  assert.equal(q.find((t) => t.topic_id === "neuro").reason, "finish reading");
+  assert.equal(q.find((t) => t.topic_id === "renal").reason, "high-yield");
+  assert.equal(q.find((t) => t.topic_id === "resp").reason, "weak");
+});

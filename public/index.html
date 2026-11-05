@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Exam Focus</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#DC2626"><meta name="description" content="Practice for exams with mock tests based on your course materials and lecturer's past questions."><link rel="manifest" href="/app.webmanifest"><link rel="icon" href="/icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><title>Exam Focus</title>
 <style>
 :root{--r:#DC2626;--r2:#B91C1C;--bd:#E4E4E7;--m:#71717A;--f:#18181B;--bg:#FAFAFA;--s:#F4F4F5}
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;font:14px/1.5 Inter,system-ui,sans-serif;background:var(--bg);color:var(--f)}
@@ -23,13 +23,60 @@ select,input,textarea{font:inherit;padding:10px 12px;border:1px solid var(--bd);
 .chip{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--s);font-size:12px;margin:2px;white-space:nowrap}.chip.r{background:#FEE2E2;color:var(--r2)}
 .dc{border:1px solid var(--bd);border-radius:12px;padding:20px;cursor:pointer;background:#fff}.dc.on{border-color:var(--r);box-shadow:0 0 0 1px var(--r)}
 .q{display:block;padding:12px 14px;border:1px solid var(--bd);border-radius:10px;margin:8px 0;cursor:pointer}.q.on{border-color:var(--r);background:#FEF2F2}
+.read-high{background:#FEF2F2;border-radius:4px;padding:1px 2px}.read-medium{background:#FEF9C3;border-radius:4px;padding:1px 2px}.reader-text{font-size:16px;line-height:1.9;white-space:normal}.reader-text span{margin-right:.25em}.study-nav{display:grid;gap:8px;align-content:start}.study-topic{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:12px}.study-topic.on{border-color:var(--r);background:#FEF2F2}.study-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
+@media(max-width:800px){.study-layout{grid-template-columns:1fr}}
 .nv{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.nv button{aspect-ratio:1;border:1px solid var(--bd);border-radius:8px;background:#fff;cursor:pointer;font:inherit}
 .nv .d{background:#52525B;color:#fff}.nv .fl{border-color:var(--r);color:var(--r)}.nv .cur{background:var(--r);color:#fff;border-color:var(--r)}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+button,a,select,input,textarea{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #FCA5A5;outline-offset:2px}
+@media(max-width:800px){
+ body{padding-bottom:env(safe-area-inset-bottom)}
+ nav{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:8px 12px max(8px,env(safe-area-inset-top));}
+ nav .logo{grid-column:1;grid-row:1}
+ nav>.tabs{grid-column:1/-1;grid-row:2;display:flex;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;white-space:nowrap;margin:0 -4px}
+ nav>.tabs::-webkit-scrollbar{display:none}
+ .tabs a{flex:0 0 auto;padding:9px 12px;min-height:42px}
+ nav>div:last-child{grid-column:2;grid-row:1;gap:6px!important}
+ nav>div:last-child .btn{padding:9px 11px;font-size:13px}
+ nav>div:last-child .btn:first-child{display:none}
+ #who{display:none}
+ main{width:100%;padding:22px 14px calc(32px + env(safe-area-inset-bottom))}
+ h1{font-size:clamp(28px,8vw,34px);line-height:1.08;overflow-wrap:anywhere}
+ h2{font-size:20px}
+ .hd{align-items:stretch;gap:12px;margin-bottom:18px}
+ .sel{width:100%;flex-wrap:wrap}
+ .sel label{min-width:min(100%,160px);flex:1}
+ .c{padding:20px}
+ .g2,.g3{gap:12px;margin-bottom:12px}
+ .bar{grid-template-columns:minmax(76px,30%) minmax(40px,1fr) 36px;gap:8px}
+ .study-layout{gap:12px}
+ .study-nav{display:flex;overflow-x:auto;gap:8px;padding:2px 0 8px;overscroll-behavior-x:contain}
+ .study-topic{flex:0 0 min(78vw,240px)}
+ .reader-text{font-size:17px;line-height:1.85}
+ .nv{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .nv button{min-width:40px;min-height:40px;aspect-ratio:auto}
+ .row{gap:10px;align-items:flex-start}
+ .row>.btn,.row button{flex:0 0 auto}
+ input,select,textarea{font-size:16px}
+ .btn{min-height:44px}
+ details summary{align-items:flex-start}
+}
+@media(max-width:420px){
+ nav .logo{gap:8px}
+ .lg{width:28px;height:28px}
+ nav>div:last-child .btn{padding:8px 10px}
+ main{padding-left:12px;padding-right:12px}
+ .c{padding:16px}
+ .g2,.g3{grid-template-columns:minmax(0,1fr)!important}
+ .sel{display:grid;grid-template-columns:1fr}
+ .bar{grid-template-columns:minmax(64px,28%) minmax(36px,1fr) 34px;font-size:11px}
+ .nv{gap:5px}
+}
 </style></head><body>
 <nav hidden><a class="logo" href="#/"><span class="lg"><i></i></span>Exam Focus</a>
-<div class="tabs"><a data-p="d" href="#/">Dashboard</a><a data-p="sources" href="#/sources">Sources</a><a data-p="courses" href="#/courses">Courses</a><a data-p="results" href="#/results">Results</a></div>
-<div style="display:flex;align-items:center;gap:12px"><a class="btn" href="#/generate">+ Generate exam</a><span id="who" class="m sm"></span><button class="btn o" onclick="signOut()">Sign out</button></div></nav>
+<div class="tabs"><a data-p="d" href="#/">Dashboard</a><a data-p="study" href="#/study">Study</a><a data-p="sources" href="#/sources">Sources</a><a data-p="courses" href="#/courses">Courses</a><a data-p="results" href="#/results">Results</a></div>
+<div style="display:flex;align-items:center;gap:12px"><a class="btn" href="#/generate">+ Generate exam</a><span id="who" class="m sm"></span><button class="btn o" id="installApp" onclick="installApp()">Install</button><button class="btn o" onclick="signOut()">Sign out</button></div></nav>
 <main id="app"></main>
 <script>
 const $=(s)=>document.querySelector(s),A=$("#app");
@@ -37,6 +84,12 @@ const esc=(s)=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"
 const api=async(p,o={})=>{const r=await fetch(p,{credentials:"same-origin",...o,headers:{...(o.headers||{})}});const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j};
 const post=(p,b)=>api(p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
 const S={course:localStorage.course||"",lect:localStorage.lect||""},E={},R={};
+let installPrompt=null;
+addEventListener("beforeinstallprompt",ev=>{ev.preventDefault();installPrompt=ev;const b=$("#installApp");if(b)b.hidden=false});
+addEventListener("appinstalled",()=>{installPrompt=null;const b=$("#installApp");if(b)b.hidden=true});
+async function installApp(){if(installPrompt){await installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;return}
+ alert(/iphone|ipad|ipod/i.test(navigator.userAgent)?"To install Exam Focus, tap Share in Safari, then choose “Add to Home Screen”.":"To install Exam Focus, open your browser menu and choose “Install app” or “Add to Home screen”.")}
+if("serviceWorker" in navigator&&location.protocol!=="file:")addEventListener("load",()=>navigator.serviceWorker.register("/service-worker.js").catch(e=>console.warn("App offline setup failed:",e)));
 function authScreen(mode,message=""){A.innerHTML=`<div class="c" style="max-width:440px;margin:9vh auto"><div class="k">Exam Focus account</div><h1 style="font-size:30px">${mode==="signup"?"Create your account":"Welcome back"}</h1><p class="m">${message?esc(message):"Sign in to keep your courses and study progress private."}</p><form id="authForm" style="display:grid;gap:12px;margin-top:20px">${mode==="signup"?`<label class="m">Your name<input name="name" autocomplete="name" required maxlength="80"></label>`:""}<label class="m">Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label class="m">Password<input name="password" type="password" autocomplete="${mode==="signup"?"new-password":"current-password"}" minlength="10" maxlength="128" required><span class="sm">At least 10 characters</span></label><button class="btn w" type="submit">${mode==="signup"?"Create account":"Sign in"}</button></form><button class="btn o w" style="margin-top:10px" onclick="authScreen('${mode==="signup"?"login":"signup"}')">${mode==="signup"?"Already have an account? Sign in":"New here? Create an account"}</button></div>`;
  $("#authForm").onsubmit=async ev=>{ev.preventDefault();const button=ev.currentTarget.querySelector("button[type=submit]"),values=Object.fromEntries(new FormData(ev.currentTarget));button.disabled=true;button.textContent="Please wait…";try{await post(`/auth/${mode}`,values);await enterApp()}catch(e){authScreen(mode,e.message)}};
 }
@@ -54,10 +107,19 @@ const noCourses=()=>{A.innerHTML=`<div class="c"><h2>Add your first course</h2><
 const usageCard=u=>`<div class="c sm" style="margin:16px 0;padding:16px 20px"><b>AI allowance today</b><div class="m">Your account: ${u.user.remaining} of ${u.user.limit} requests remaining · Shared service: ${u.platform.remaining} available · resets at 00:00 UTC. One exam may use several requests; cached work does not count.</div></div>`;
 
 async function go(){const[,a,b]=(location.hash.slice(1)||"/").split("/");
+ if(a!=="study"||STUDY.topicId!==b||STUDY.courseId!==S.course)await stopStudyTimer();
  document.querySelectorAll(".tabs a").forEach(x=>x.classList.toggle("on",x.dataset.p===(a||"d")));
  $("nav").hidden=a==="exam";
  try{await(R[a||"d"]||R.d)(b)}catch(e){A.innerHTML=`<p class="m">${esc(e.message)}</p>`}}
 addEventListener("hashchange",go);
+
+const STUDY={};
+async function flushStudyTime(){if(STUDY.saving){await STUDY.saving;if(STUDY.seconds>=30)return flushStudyTime();return}if(!STUDY.chunkId||!STUDY.seconds)return;const chunkId=STUDY.chunkId,seconds=STUDY.seconds;STUDY.seconds=0;
+ STUDY.saving=post("/reading/progress",{chunkId,seconds}).then(saved=>{if(saved.seconds>=30){const c=STUDY.detail?.chunks.find(x=>x.id===chunkId);if(c)c.read=true;if(STUDY.chunkId===chunkId){const status=$("#readerStatus");if(status)status.textContent="Read before"}}}).catch(e=>{if(STUDY.chunkId===chunkId)STUDY.seconds+=seconds;STUDY.error=e.message}).finally(()=>{STUDY.saving=null});
+ await STUDY.saving;
+}
+function stopStudyTimer(){clearInterval(STUDY.timer);STUDY.timer=null;return flushStudyTime()}
+function startStudyTimer(chunkId){if(STUDY.chunkId===chunkId&&STUDY.timer)return;clearInterval(STUDY.timer);STUDY.chunkId=chunkId;STUDY.seconds=0;STUDY.error="";STUDY.timer=setInterval(()=>{if(document.visibilityState!=="visible")return;STUDY.seconds++;if(STUDY.seconds>=30)flushStudyTime()},1000)}
 
 R.d=async()=>{await init();
  if(!S.courses.length){A.innerHTML=`<p class="m">No courses yet. Add one to the courses table.</p>`;return}
@@ -71,8 +133,33 @@ R.d=async()=>{await init();
  ${d.topics.length?bars(d.topics):`<p class="m">Upload past questions to see which topics get tested.</p>`}<a class="btn w" style="margin-top:16px" href="#/generate">Start mock exam →</a></div>
  <div class="c" style="display:flex;flex-direction:column"><div class="k">Recent practice</div><h2>Keep your rhythm.</h2><div style="margin-top:12px">${d.recent.length?d.recent.map(arow).join(""):`<p class="m">No attempts yet.</p>`}</div><a href="#/results" class="m" style="text-decoration:none;margin-top:auto;padding-top:16px">View all attempts →</a></div></div>
  <div class="g3" style="grid-template-columns:repeat(3,1fr)"><div class="c" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:22px"><div><b>Your source library</b><div class="m sm">${d.sources} ready source${d.sources==1?"":"s"} · Past questions, notes and CCMAS</div></div><a class="btn o" href="#/sources">Manage →</a></div>
- <div class="c" style="padding:22px"><div class="k">Practice streak</div><b style="font-size:24px">${d.streak.current} day${d.streak.current===1?"":"s"}</b><div class="m sm">Longest: ${d.streak.longest} day${d.streak.longest===1?"":"s"} · based on completed exams</div></div>
+ <div class="c" style="padding:22px"><div class="k">Practice streak</div><b style="font-size:24px">${d.streak.current} day${d.streak.current===1?"":"s"}</b><div class="m sm">Longest: ${d.streak.longest} day${d.streak.longest===1?"":"s"} · exams or focused reading</div></div>
  <a class="c" href="#/${d.weak?"generate/weak":"sources"}" style="background:var(--s);text-decoration:none;color:inherit;padding:22px"><div class="k">Suggested next step</div><b>${d.weak?"Revisit "+esc(d.weak.toLowerCase()):"Upload a past paper"}</b><div class="m sm">${d.weak?"One of your lower-scoring topics.":"So Exam Focus can learn how your lecturer sets questions."}</div></a></div>`};
+
+R.study=async(topicId)=>{await init();if(!S.courses.length){noCourses();return}
+ const queue=await api("/reading?courseId="+S.course),chosen=queue.topics.find(t=>t.topic_id===topicId)||queue.topics[0];
+ if(!chosen){A.innerHTML=`<div class="hd"><div><div class="k">${esc(cn())}</div><h1>Study your notes</h1><p class="m">Add course topics and upload lecture notes or a textbook to begin.</p></div>${coursePicker()}</div><div class="c"><p class="m">Reading guidance is based on your topics, past papers, and completed exams.</p><a class="btn" href="#/sources">Add study materials</a></div>`;STUDY.topicId="";return}
+ const activeId=chosen.topic_id,detail=await api(`/reading/topics/${activeId}?courseId=${S.course}`);
+ STUDY.topicId=activeId;STUDY.courseId=S.course;STUDY.detail=detail;STUDY.index=Math.min(STUDY.index||0,Math.max(0,detail.chunks.length-1));
+ if(detail.chunks.length)startStudyTimer(detail.chunks[STUDY.index].id);else{clearInterval(STUDY.timer);STUDY.timer=null;STUDY.chunkId="";}
+ drawStudy(queue.topics,detail,activeId)};
+function drawStudy(queue,detail,activeId){const c=detail.chunks[STUDY.index],how=detail.howAsked;
+ A.innerHTML=`<div class="hd"><div><div class="k">${esc(cn())} · Guided reading</div><h1>Study before you test.</h1><p class="m">Start with topics that recur in past papers and need practice. Highlights are based on your past questions.</p></div>${coursePicker()}</div>
+ <div class="study-layout"><aside class="study-nav">${queue.map(t=>`<a class="study-topic ${t.topic_id===activeId?"on":""}" href="#/study/${t.topic_id}"><b>${esc(t.title)}</b><div class="m sm">${esc(t.reason)} · ${Math.round(t.readFraction*100)}% read</div></a>`).join("")}</aside>
+ <section><div class="c" style="margin-bottom:16px"><div class="k">How this topic appears in your papers</div><h2 style="margin-top:8px">${esc(detail.topic.title)}</h2>
+ ${how.askedInPapers?`<p class="m">Asked in ${how.askedInPapers}${how.ofPapers?` of ${how.ofPapers}`:""} papers${how.years.length?` · ${how.years.join(", ")}`:""}${how.typicalType?` · commonly ${esc(how.typicalType.replace("_"," "))}`:""}</p>`:`<p class="m">No past-paper questions are tagged to this topic yet.</p>`}
+ ${how.verbs.length?`<div>${how.verbs.slice(0,5).map(v=>`<span class="chip">${esc(v.command_verb)} · ${v.n}</span>`).join("")}</div>`:""}
+ ${how.guide?`<p><b>Answering tip:</b> ${esc(how.guide)}</p>`:""}</div>
+ ${!c?`<div class="c"><p class="m">No reading passages are available for this topic yet. Upload notes, a textbook, or CCMAS material.</p><a class="btn o" href="#/sources">Manage sources</a></div>`:`<div class="c"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><b>Passage ${STUDY.index+1} of ${detail.chunks.length}</b><span class="m sm"><span id="readerStatus">${c.read?"Read before":"Reading now"}</span>${STUDY.error?` · Progress not saved: ${esc(STUDY.error)}`:""}</span></div>
+ ${c.summary.length?`<div style="background:var(--s);border-radius:10px;padding:14px 18px;margin:16px 0"><b>Key points</b><ul>${c.summary.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:""}
+ <div class="reader-text" id="readerText" style="margin:18px 0">${c.sentences.map(s=>`<span class="${s.level==="high"?"read-high":s.level==="medium"?"read-medium":""}">${esc(s.text)}</span>`).join(" ")}</div>
+ <div style="display:flex;justify-content:space-between;gap:8px"><button class="btn o" onclick="moveStudy(-1)" ${STUDY.index===0?"disabled":""}>← Previous</button><button class="btn o" onclick="useStudySelection()">Use selected passage</button><button class="btn" onclick="moveStudy(1)" ${STUDY.index>=detail.chunks.length-1?"disabled":""}>Next →</button></div>
+ <div style="border-top:1px solid var(--bd);margin-top:20px;padding-top:16px"><b>My note</b><input id="noteQuote" placeholder="Highlighted text (optional)" maxlength="2000" style="margin:8px 0"><textarea id="noteText" rows="3" maxlength="2000" placeholder="Write a note about this passage"></textarea><button class="btn o" style="margin-top:8px" onclick="saveStudyNote(this)">Save note</button></div>
+ ${detail.notes.length?`<div style="margin-top:16px"><b>Saved notes for this topic</b>${detail.notes.map(n=>`<div class="row"><div>${n.quote?`<div><b>${esc(n.quote)}</b></div>`:""}<div class="m">${esc(n.note||"")}</div></div><button class="btn o" onclick="deleteStudyNote('${n.id}')">Delete</button></div>`).join("")}</div>`:""}</div>`}</section></div>`}
+async function moveStudy(delta){await flushStudyTime();STUDY.index=Math.max(0,Math.min(STUDY.detail.chunks.length-1,STUDY.index+delta));const c=STUDY.detail.chunks[STUDY.index];if(c)startStudyTimer(c.id);drawStudy(await api("/reading?courseId="+S.course),STUDY.detail,STUDY.topicId)}
+function useStudySelection(){const selected=document.getSelection()?.toString().trim();if(selected)$("#noteQuote").value=selected.slice(0,2000)}
+async function saveStudyNote(b){const c=STUDY.detail.chunks[STUDY.index];if(!c)return;b.disabled=true;try{const n=await post("/reading/notes",{chunkId:c.id,quote:$("#noteQuote").value,note:$("#noteText").value});STUDY.detail.notes.unshift(n);drawStudy(await api("/reading?courseId="+S.course),STUDY.detail,STUDY.topicId)}catch(e){alert(e.message);b.disabled=false}}
+async function deleteStudyNote(id){try{await api("/reading/notes/"+id,{method:"DELETE"});STUDY.detail.notes=STUDY.detail.notes.filter(n=>n.id!==id);drawStudy(await api("/reading?courseId="+S.course),STUDY.detail,STUDY.topicId)}catch(e){alert(e.message)}}
 
 R.courses=async()=>{S.courses=null;await init();
  const tp=S.course?await api(`/courses/${S.course}/topics`):[];

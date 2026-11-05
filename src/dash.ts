@@ -42,8 +42,8 @@ export function dashRoutes(app: any, h: any, uid: (r: any) => string) {
        JOIN exam_questions eq ON eq.id=aa.exam_question_id JOIN exams e ON e.id=a.exam_id JOIN ccmas_topics t ON t.id=eq.topic_id
        WHERE a.user_id=$1 AND e.course_id=$2 GROUP BY t.title ORDER BY sum(aa.score)/greatest(sum(eq.marks),1) ASC LIMIT 1`, [u, courseId]);
     const studyDays = await rows(
-      `SELECT DISTINCT a.submitted_at::date AS day FROM attempts a JOIN exams e ON e.id=a.exam_id
-       WHERE a.user_id=$1 AND e.course_id=$2 AND a.submitted_at IS NOT NULL`, [u, courseId]);
+      `SELECT day FROM study_days WHERE user_id=$1
+       UNION SELECT a.submitted_at::date FROM attempts a WHERE a.user_id=$1 AND a.submitted_at IS NOT NULL`, [u]);
     res.json({
       readiness: masteryRows.length ? mastery.score : null,
       topics, recent: recent.slice(0, 3), sources: src.n, weak: weak?.title ?? null,

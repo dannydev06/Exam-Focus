@@ -334,3 +334,95 @@ export function makeGateway({ cache, usage, providers, now = () => new Date() })
     throw new Error("AI_UNAVAILABLE");
   };
 }
+
+/* ───────────── 14. Reading mode (study before testing, no AI) ───────────── */
+export const COMMAND_GUIDE = {
+  define: "One precise sentence, then an example if the marks allow.",
+  state: "Short, direct points. No explanation unless the marks ask for it.",
+  list: "Numbered points, one line each, matching the number of marks.",
+  outline: "Main points only, one line each, in logical order.",
+  describe: "Say what it looks like or how it is arranged, step by step. Label the parts.",
+  explain: "Give the mechanism: what happens and why. Aim for one reason per mark.",
+  discuss: "Cover several aspects or both sides, then a short conclusion.",
+  compare: "Go side by side on the same criteria: similarities and differences.",
+  differentiate: "Pair each feature of A with the matching feature of B. A table works well.",
+  distinguish: "Pair each feature of A with the matching feature of B. A table works well.",
+  calculate: "Write the formula, substitute with units, then give the final answer with units.",
+  illustrate: "Use a labelled diagram or a worked example.",
+  justify: "Give your answer, then the evidence for it.",
+  evaluate: "Weigh strengths against weaknesses, then reach a judgement.",
+};
+const NOT_EXAMINABLE = new Set([...Object.keys(COMMAND_GUIDE).map(stem), "following", "give", "brief", "write", "short", "note", "term", "question", "mark", "answer", "briefly"]);
+
+export function answerGuide(verb, marks = 0) {
+  const base = COMMAND_GUIDE[String(verb ?? "").toLowerCase()] ?? null;
+  const m = Number(marks) || 0;
+  const length = m <= 0 ? null : m <= 2 ? "One to two lines."
+    : m <= 5 ? `About ${Math.round(m)} distinct points.`
+    : `A short introduction, about ${Math.round(m)} points with examples, then a conclusion.`;
+  return [base, length].filter(Boolean).join(" ") || null;
+}
+
+// Terms a lecturer keeps asking about, weighted by how many questions use them.
+export function examTerms(questions) {
+  const df = new Map();
+  for (const q of questions) for (const [k] of keyTerms(q.text)) {
+    if (NOT_EXAMINABLE.has(k)) continue;
+    df.set(k, (df.get(k) || 0) + (Number(q.marks) >= 5 ? 1.5 : 1)); // big-mark questions count more
+  }
+  return new Map([...df].map(([k, c]) => [k, 1 + Math.log(c)]));
+}
+
+// Score every sentence of a passage. level: "high" (top 10%) | "medium" (next 15%) | null.
+export function scoreSentences(text, { terms }) {
+  const scored = sentences(text).filter(Boolean).map((s, index) => {
+    let hit = 0; const matched = [];
+    for (const [k, { word }] of keyTerms(s)) { const w = terms.get(k); if (w) { hit += w; matched.push(word); } }
+    const isDef = DEF.test(s);
+    const score = hit / Math.sqrt(Math.max(8, tokenize(s).length)) + (isDef ? 0.6 : 0);
+    return { index, text: s, score: round(score, 3), matched, kind: isDef ? "definition" : null };
+  });
+  const ranked = scored.filter((x) => x.score > 0).sort((a, b) => b.score - a.score);
+  const hi = Math.ceil(scored.length * 0.1), md = Math.ceil(scored.length * 0.25);
+  const high = new Set(ranked.slice(0, hi).map((x) => x.index)), med = new Set(ranked.slice(hi, md).map((x) => x.index));
+  return scored.map((x) => ({ ...x, level: high.has(x.index) ? "high" : med.has(x.index) ? "medium" : null }));
+}
+
+// Key points: highest-scoring sentences, near-duplicates skipped, shown in reading order.
+export function extractiveSummary(text, { terms, max = 4 }) {
+  const pool = scoreSentences(text, { terms }).filter((s) => s.score > 0 && tokenize(s.text).length >= 6).sort((a, b) => b.score - a.score);
+  const chosen = [];
+  for (const s of pool) {
+    if (chosen.length >= max) break;
+    const a = new Set(tokenize(s.text));
+    const dup = chosen.some((c) => { const b = new Set(tokenize(c.text)); const inter = [...a].filter((x) => b.has(x)).length; return inter / (a.size + b.size - inter) > 0.6; });
+    if (!dup) chosen.push(s);
+  }
+  return chosen.sort((a, b) => a.index - b.index).map((s) => s.text);
+}
+
+// "How this topic is asked": rows are the past questions for ONE topic.
+export function howAsked(rows, { papers = null } = {}) {
+  if (!rows.length) return { askedInPapers: 0, ofPapers: papers, verbs: [], avgMarks: null, typicalType: null, years: [], guide: null };
+  const count = (vals) => Object.entries(vals.reduce((m, v) => (v ? (m[v] = (m[v] || 0) + 1, m) : m), {})).sort((a, b) => b[1] - a[1]);
+  const verbs = count(rows.map((r) => r.command_verb?.toLowerCase())).map(([command_verb, n]) => ({ command_verb, n }));
+  const marks = rows.map((r) => Number(r.marks)).filter(Number.isFinite);
+  const avgMarks = marks.length ? round(marks.reduce((a, b) => a + b, 0) / marks.length, 1) : null;
+  return {
+    askedInPapers: new Set(rows.map((r) => r.document_id)).size, ofPapers: papers, verbs, avgMarks,
+    typicalType: count(rows.map((r) => r.q_type))[0]?.[0] ?? null,
+    years: [...new Set(rows.map((r) => r.year).filter(Boolean))].sort((a, b) => b - a),
+    guide: verbs[0] ? answerGuide(verbs[0].command_verb, avgMarks ?? 0) : null,
+  };
+}
+
+// topics: [{ topic_id, title, share, tier, mastery, readFraction }] (share/tier from bankerTopics, mastery from readiness)
+export function readingQueue(topics) {
+  return topics.map((t) => {
+    const mastery = clamp(t.mastery ?? 0, 0, 1), read = clamp(t.readFraction ?? 0, 0, 1), banker = t.tier === "banker";
+    const priority = Math.max(t.share ?? 0, 0.02) * (1.05 - mastery) * (1 - 0.9 * read); // examined often, known poorly, not read yet
+    const reason = read >= 0.95 ? "done" : read > 0 ? "finish reading" : banker && mastery < 0.6 ? "high-yield and weak"
+      : banker ? "high-yield" : mastery < 0.5 ? "weak" : "worth a read";
+    return { ...t, priority: round(priority, 4), reason };
+  }).filter((t) => t.reason !== "done").sort((a, b) => b.priority - a.priority);
+}

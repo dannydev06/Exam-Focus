@@ -7,6 +7,7 @@ import { generateExam } from "./generate.js";
 import { submitAttempt } from "./mark.js";
 import { dashRoutes } from "./dash.js";
 import { setupRoutes } from "./setup.js";
+import { ensureReadingSchema, readingRoutes } from "./reading.js";
 import { authenticate, authRoutes, ensureTenantSchema, requireSameOrigin } from "./auth.js";
 
 const app = express();
@@ -22,6 +23,7 @@ const h = (fn: (req: any, res: any) => Promise<any>) => (req: any, res: any) =>
   }));
 
 await ensureTenantSchema();
+await ensureReadingSchema();
 app.use(requireSameOrigin);
 authRoutes(app, h);
 app.get("/auth/me", authenticate, h(async (req, res) => {
@@ -87,6 +89,7 @@ app.get("/lecturers", h(async (_req, res) => {
 }));
 
 dashRoutes(app, h, uid);
+readingRoutes(app, h, uid);
 setupRoutes(app, h, uid, upload);
 
 app.listen(Number(process.env.PORT) || 3000, () => console.log(`PQ prep API on :${Number(process.env.PORT) || 3000}`));
