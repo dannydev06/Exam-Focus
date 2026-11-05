@@ -2,9 +2,32 @@ import dotenv from "dotenv";
 dotenv.config({ override: true }); // values in .env win over leftover shell variables like PGPASSWORD
 import pg from "pg";
 import { createHash } from "node:crypto";
+import { isIP } from "node:net";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-export const db = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+function isLocalDatabaseHost(host: string): boolean {
+  const normalized = host.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.$/, "");
+  const ipVersion = isIP(normalized);
+  return normalized === "localhost" || normalized.endsWith(".localhost") ||
+    normalized.startsWith("/") || (ipVersion === 4 && normalized.startsWith("127.")) ||
+    (ipVersion === 6 && (normalized === "::1" || normalized.startsWith("::ffff:127.")));
+}
+
+function databasePoolOptions() {
+  const connectionString = process.env.DATABASE_URL;
+  const url = connectionString ? new URL(connectionString) : null;
+  const host = url?.hostname || process.env.PGHOST || "localhost";
+  if (url) {
+    // Prevent URL sslmode/ssl parameters from weakening the verified TLS setting below.
+    for (const key of ["sslmode", "ssl", "sslcert", "sslkey", "sslrootcert"]) url.searchParams.delete(key);
+  }
+  return {
+    ...(url ? { connectionString: url.toString() } : {}),
+    ssl: isLocalDatabaseHost(host) ? false : { rejectUnauthorized: true },
+  };
+}
+
+export const db = new pg.Pool(databasePoolOptions());
 db.query("SELECT 1").then(
   () => console.log("Database connected ✓"),
   (e) => console.error("Database connection failed:", e.message, "| user:", process.env.PGUSER, "| password length:", process.env.PGPASSWORD?.length),

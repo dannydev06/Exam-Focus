@@ -71,7 +71,7 @@ Open the app and create an account or sign in. The first run applies the account
 
 The app also creates the reading-progress, personal-note, and study-day tables at startup. Run `schema_v2.sql` and `schema_v3.sql` after the base schema to install the remaining optional study features and reading-coverage view.
 
-Each account has a private copy of its courses and study data; this version does not yet support shared class workspaces. Use HTTPS when hosting publicly so session cookies are protected. Email verification and password-reset emails are not configured yet, so users should use an email address they can access and remember their password. Daily AI allowances reset at 00:00 UTC; they govern uncached provider requests, not exact provider charges.
+Each account has a private copy of its courses and study data; this version does not yet support shared class workspaces. Use HTTPS when hosting publicly so session cookies and browser-to-app traffic are protected. Remote PostgreSQL connections require TLS with certificate verification; local loopback/socket connections are left unencrypted for development. Do not use an untrusted/self-signed database certificate. Enable encryption at rest for the managed database, storage volumes, and backups in your hosting provider, and store API/database secrets only in deployment secrets or an untracked `.env` file. Email verification and password-reset emails are not configured yet, so users should use an email address they can access and remember their password. Daily AI allowances reset at 00:00 UTC; they govern uncached provider requests, not exact provider charges.
 
 Free API keys are enough to try it: see `.env.example` for the providers supported.
 
