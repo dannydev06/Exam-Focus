@@ -83,7 +83,9 @@ Create a Render Web Service for this repository and use:
 - **Start Command:** `npm start`
 - **Node version:** 20 or newer
 
-Configure the required database and AI provider environment variables in Render. The service listens on the port provided by Render.
+Create a Render PostgreSQL database and make sure it is in the same region as the web service. In the web service's **Environment** settings, add `DATABASE_URL` with the database's **Internal Database URL** from its Render dashboard. Do not set it to `localhost` or `127.0.0.1`; those addresses point back to the web-service container, not to the database. The app uses localhost only as a development fallback when `DATABASE_URL` and `PGHOST` are unset, so a missing `DATABASE_URL` causes startup to fail with `ECONNREFUSED` on port 5432.
+
+Also add the AI provider API key(s) you plan to use as environment variables in Render. Keep secrets in Render's environment settings, not in the repository. The service listens on the port provided by Render.
 
 ## Limitations and roadmap
 
