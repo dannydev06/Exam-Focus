@@ -75,6 +75,16 @@ Each account has a private copy of its courses and study data; this version does
 
 Free API keys are enough to try it: see `.env.example` for the providers supported.
 
+### Deploy on Render
+
+Create a Render Web Service for this repository and use:
+
+- **Build Command:** `npm install && npm run build`
+- **Start Command:** `npm start`
+- **Node version:** 20 or newer
+
+Configure the required database and AI provider environment variables in Render. The service listens on the port provided by Render.
+
 ## Limitations and roadmap
 
 - No shared course workspaces, email verification, or self-service password reset yet.
