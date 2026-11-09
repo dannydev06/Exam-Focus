@@ -69,7 +69,15 @@ npm run dev                 # http://localhost:3000
 
 Open the app and create an account or sign in. The first run applies the account/session and course-ownership migration to the existing database. Existing course ownership is inferred from its source and exam records; if a course has records from multiple users, startup stops rather than expose them across accounts. Add a course on the Courses page, then upload your own past questions and notes. For the demo course, upload the PDFs in `sample-data/` (the two past papers as "Past questions" with years 2023 and 2024, and the lecture notes as "Notes") and generate an exam.
 
-The app also creates the reading-progress, personal-note, and study-day tables at startup. Run `schema_v2.sql` and `schema_v3.sql` after the base schema to install the remaining optional study features and reading-coverage view.
+The app also creates the reading-progress, personal-note, study-day, and feedback tables at startup. Run `schema_v2.sql`, `schema_v3.sql`, and `schema_v4.sql` after the base schema to install the optional study features, reading-coverage view, and feedback storage.
+
+Users can submit feedback from the **Feedback** tab; it is saved in PostgreSQL with the sender's account email. Emails are collected at signup but are not verified, so an address may not belong to the person who entered it. To enable owner-only CSV downloads of user email addresses and feedback, set `ADMIN_USER_ID` in the web service's environment to your own account's UUID. Find it in Neon after signing in with:
+
+```sql
+SELECT id FROM users WHERE lower(email) = lower('your-account-email@example.com');
+```
+
+Keep `ADMIN_USER_ID` private and do not set it to a value supplied by an untrusted user. Without it, admin exports stay disabled.
 
 Each account has a private copy of its courses and study data; this version does not yet support shared class workspaces. Use HTTPS when hosting publicly so session cookies and browser-to-app traffic are protected. Remote PostgreSQL connections require TLS with certificate verification; local loopback/socket connections are left unencrypted for development. Do not use an untrusted/self-signed database certificate. Enable encryption at rest for the managed database, storage volumes, and backups in your hosting provider, and store API/database secrets only in deployment secrets or an untracked `.env` file. Email verification and password-reset emails are not configured yet, so users should use an email address they can access and remember their password. Daily AI allowances reset at 00:00 UTC; they govern uncached provider requests, not exact provider charges.
 

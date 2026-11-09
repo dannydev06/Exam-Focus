@@ -8,6 +8,7 @@ import { submitAttempt } from "./mark.js";
 import { dashRoutes } from "./dash.js";
 import { setupRoutes } from "./setup.js";
 import { ensureReadingSchema, readingRoutes } from "./reading.js";
+import { ensureFeedbackSchema, feedbackRoutes } from "./feedback.js";
 import { authenticate, authRoutes, ensureTenantSchema, requireSameOrigin } from "./auth.js";
 
 const app = express();
@@ -24,14 +25,16 @@ const h = (fn: (req: any, res: any) => Promise<any>) => (req: any, res: any) =>
 
 await ensureTenantSchema();
 await ensureReadingSchema();
+await ensureFeedbackSchema();
 app.use(requireSameOrigin);
 authRoutes(app, h);
 app.get("/auth/me", authenticate, h(async (req, res) => {
   const { rows: [user] } = await db.query(`SELECT id, email, name FROM users WHERE id=$1`, [uid(req)]);
   if (!user) return res.status(401).json({ error: "Sign in to continue." });
-  res.json(user);
+  res.json({ ...user, isAdmin: Boolean(process.env.ADMIN_USER_ID?.trim() && uid(req) === process.env.ADMIN_USER_ID.trim()) });
 }));
 app.use(authenticate);
+feedbackRoutes(app, h, uid);
 app.get("/ai-usage", h(async (req, res) => {
   res.json(await aiUsage(uid(req)));
 }));
